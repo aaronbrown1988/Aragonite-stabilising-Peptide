@@ -118,29 +118,29 @@ for ($i=0; $i<$sol; $i++) {
 	
 	$x[$i] += $xmin;
 	$y[$i] += $ymin;
-	$z[$i] += $zmin;
+	$z[$i] += $zmax+0.2;
 	
 	
-	if (inslab($x[$i], $y[$i],$z[$i]) == 1) {
-	#	print "$i @ ($x[$i],$y[$i],$z[$i]) is in the slab\n";
-		push(@exclude, $i);
+	#if (inslab($x[$i], $y[$i],$z[$i]) == 1) {
+	##	print "$i @ ($x[$i],$y[$i],$z[$i]) is in the slab\n";
+		#push(@exclude, $i);
 		
-		# Exclude the other atoms in that water molecule.
-		if ($i % 3 == 0) {
-			push(@exclude,$i+1);
-			push(@exclude, $i+2);
-		} elsif ($i %3 == 1) {
-			push(@exclude,$i-1);
-			push(@exclude,$i+1);
-		} elsif ( $i%3 == 2) {
-			push(@exclude,$i-1);
-			push(@exclude, $i-2);
-		}
-		$slab++;
-	} else {
-		 print  SOLV "$curratom\t$currtag\t$lmp_type\t$charge\t$x[$i]\t$y[$i]\t$z[$i]\n";
+		## Exclude the other atoms in that water molecule.
+		#if ($i % 3 == 0) {
+			#push(@exclude,$i+1);
+			#push(@exclude, $i+2);
+		#} elsif ($i %3 == 1) {
+			#push(@exclude,$i-1);
+			#push(@exclude,$i+1);
+		#} elsif ( $i%3 == 2) {
+			#push(@exclude,$i-1);
+			#push(@exclude, $i-2);
+		#}
+		#$slab++;
+	#} else {
+		 print  SOLV "\t$curratom\t$currtag\t$lmp_type\t$charge\t$x[$i]\t$y[$i]\t$z[$i]\n";
 		$curratom++;
-	}
+	#}
 }
 
 print "$slab/$sol atoms found where we want our slab....\n";
@@ -168,14 +168,28 @@ while ($line = readline(LMPDATA)) {
 # Add Water bonds
 $curratom = $last_atom;
 for ($i =0; $i<$sol; $i+=3) {
-	if(inslab($x[$i], $y[$i], $z[$i]) == 0) {
+	#if(inslab($x[$i], $y[$i], $z[$i]) == 0) {
 		$currbond ++;
-		$curratom ++;
+		$curratom = $last_atom +$i;
 		$neigh = $curratom +1;
-		print SOLV "$currbond\t2\t$curratom\t$neigh\n";
+		print SOLV "\t$currbond\t2\t$curratom\t$neigh\n";
+		$currbond ++;
 		$neigh = $curratom +2;
-		print SOLV "$currbond\t2\t$curratom\t$neigh\n";
-	}
+		print SOLV "\t$currbond\t2\t$curratom\t$neigh\n";
+	#}
+}
+
+
+
+print SOLV "Angles\n\n";
+$curratom = $last_atom;
+$currangle = 0;
+for ($i = 0 ; $i < $sol; $i+= 3) {
+	$currangle ++;
+	$curratom = $last_atom+$i;
+	$n1 = $curratom +1;
+	$n2 = $curratom +2;
+	print SOLV "\t$currangle\t2\t$n1\t$curratom\t$n2\n";
 }
 
 
