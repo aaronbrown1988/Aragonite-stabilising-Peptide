@@ -116,8 +116,12 @@ for ($i=0; $i<$sol; $i++) {
 	$lmp_type = ($type[$i] eq "OW")? $lmp_o_type: $lmp_h_type;
 	$charge = ($type[$i] eq OW)? -0.820000: 0.410000;
 	
-	$x[$i] += $xmin;
-	$y[$i] += $ymin;
+#	$x[$i] += $xmin;
+#	$y[$i] += $ymin;
+
+	$x[$i] = $x[$i] * 0.9 +$xmin;
+	$y[$i] = $y[$i] * 0.9 +$ymin;
+	
 	$z[$i] += $zmax+0.2;
 	
 	

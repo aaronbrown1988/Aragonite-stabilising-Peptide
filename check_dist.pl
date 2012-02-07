@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-open(FH, "chain.lmp");
+open(FH, "chain.sol.lmp");
 while ($line = readline(FH)) {
 	if ($line  =~ /.*Atoms.*/) {
 		last;
@@ -11,11 +11,11 @@ while ($line = readline(FH)) {
 	if (length($line) < 3 ) {
 		last;
 	}
-	($a,$b,$c,$d,$e,$f,$g) = split(/\s+/,$line);
+	($sp, $a,$b,$c,$d,$e,$f,$g) = split(/\s+/,$line);
 	push(@x, $e);
 	push(@y, $f);
 	push(@z, $g);
-#	print "$e, $f,$g\n"
+	print "$e, $f,$g\n"
 }
 
 
@@ -26,7 +26,7 @@ $zmin = 9999999;
 $ymax = -$ymin;
 $zmax = -$zmin;
 
-for($i=0; $i< 450; $i++) {
+for($i=0; $i< 3540; $i++) {
 	$xmin = ($xmin > $x[$i])? $x[$i] : $xmin;
 	$xmax = ($xmax < $x[$i])? $x[$i] : $xmax;
 	$ymin = ($ymin > $y[$i])? $y[$i] : $ymin;
@@ -38,8 +38,8 @@ $xl = 0.5*($xmax - $xmin);
 $yl = 0.5*($ymax - $ymin);
 $zl = 0.5*($zmax - $zmin);
 
-for($i=0; $i< 450; $i++) {
-	for($j=0; $j<450; $j++) {
+for($i=0; $i< 3540; $i++) {
+	for($j=0; $j<3540; $j++) {
 		$xdist =($x[$i] - $x[$j]);
 		$ydist = ($y[$i] - $y[$j]);
 		$zdist = ($z[$i] - $z[$j]);	
@@ -48,10 +48,10 @@ for($i=0; $i< 450; $i++) {
 		$ydist = ($ydist > $yl)? $ydist - $yl: $ydist;
 		$zdist = ($zdist > $zl)? $zdist - $zl: $zdist;
 	
-		$dist = sqrt($xdist**2 + $ydist**2 +$zdist**2);
+		$dist = sqrt($xdist**2 + $ydist**2 + $zdist**2);
 
 		if ($dist <=0.1 && $i != $j ) {
-			printf("$i and $j are too close\n");
+			printf("$i and $j are too close at $dist apart\n");
 }}}
 
 print "Slab bounds:\n";
