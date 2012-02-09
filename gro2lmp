@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+use POSIX;
 
 print  "USAGE tinker.xyz ff_directory lmpfile\n";
 
@@ -15,7 +16,6 @@ print "I was passed: @ARGV \n";
 open(GRO, @ARGV[0]) || die "couldn't open @_[0]\n";
 #open(LMPIN, @ARGV[2]) || die "couldn't open @_[2]\n";
 open (LMPOUT, ">out.lmp");
-
 
 
 if ( !(-d $ARGV[1])) {
@@ -58,6 +58,18 @@ while ($line = readline(FF)) {
 }
 close(FF);
 
+print LMPOUT "\nMasses\n\n";
+$currtype = 1;
+foreach  (@type) {
+	if (!defined($typehash{$_})) {
+		print LMPOUT "\t$currtype\t$mass{$_}\t#$_\n";
+		
+		$typehash{$_} = $currtype;
+		$currtype ++
+	}
+}			
+
+
 
 open(FF, "$ARGV[1]/ffnonbonded.itp") || die "Couldn't open ffnonbonded.itp\n";
 readline(FF);
@@ -68,7 +80,7 @@ while($line = readline(FF)) {
 		($cur_type, $cur_at, $cur_mas, $cur_charge, $cur_p, $cur_sigma, $cur_eps, $throw) = split(/\t/, $line);
 		print "$line=> $cur_type, $cur_at,$cur_mas,$cur_charge\n";
 		$charge{$cur_type} = 0.0;
-		
+		chomp($cur_eps);
 		$charge{$cur_type} = $cur_charge;
 		$sig{$cur_type} = $cur_sigma;
 		$cur_eps =~ s/ .*//;
@@ -84,37 +96,32 @@ while ($line = readline(FF)) {
 	if($line=~ /.*pairtypes.*/) { readline(FF);last;}
 }
 $curr_pair = 1;
-print LMPOUT "\nNonbond Coeffs\n\n";
+print LMPOUT "\nPair Coeffs\n\n";
 while($line = readline(FF)) {
 	if(length($line) < 3){last;}
 	if($line =~ /^[^#; ].*/) {
 		($atype, $btype, $curtype, $cur_sig, $cur_eps) = split(/\s+/, $line);
-		if(!defined($pairtype{"$atype-$btype"})) {
-			$pairtype{"$atype-$btype"} = $curr_pair;
+		
+		if(defined($typehash{$atype}) && ($atype eq $btype)) {
 			$epsfudge = sqrt($eps{$atype}*$eps{$btype});
 			if ($psfudge==0) {
 				print "$atype $eps{$atype} $btype $eps{$btype}\n";
 			}
 			$sigfudge = 0.5*($sig{$atype}+$sig{$btype});
-			print LMPOUT "\t$curr_pair\t$epsfudge\t$sigfudge\t$cur_sig\t$cur_eps # $atype-$btype\n";
+			print LMPOUT "\t$typehash{$atype}\t$epsfudge\t$sigfudge\t$cur_sig\t$cur_eps # $atype-$btype\n";
 			$curr_pair++;
 		}
 	}
+}
+foreach  (keys(%typehash)) {
+	$epsfudge = sqrt($eps{$_}*$eps{$_});
+	$sigfudge = 0.5*($sig{$_}+$sig{$_});
+	print LMPOUT "\t$typehash{$_}\t$eps{$_}\t$sig{$_} # \n";
 }
 
 
 
 
-print LMPOUT "\nMasses\n\n";
-$currtype = 5;
-foreach  (@type) {
-	if (!defined($typehash{$_})) {
-		print LMPOUT "\t$currtype\t$mass{$_}\t#$_\n";
-		
-		$typehash{$_} = $currtype;
-		$currtype ++
-	}
-}			
 
 
 
@@ -170,32 +177,39 @@ while($line = readline(FF)) {
 	if($line =~ /^[^#; ].*/) {
 		($atype, $btype, $ctype, $dtype, $cur_type, $phi, $cp, $mult) = split(/\s+/,$line);
 		if(!defined($dihedtype{"$atype-$btype-$ctype-$dtype"})) {
-			print LMPOUT "\t$curr_dihedral\t$cp\t$multi\t$phi\t0.0 # $atype-$btype-$ctype-$dtype \n";
-			$curr_dihedral++;
+			if ($cur_type == 9) {
+				$phi = floor($phi);
+				$phi =~ s/\..*//;
+				print LMPOUT "\t$curr_dihedral\t$cp\t$mult\t$phi\t0.0 # $atype-$btype-$ctype-$dtype \n";
+				$curr_dihedral++;
+			}
 		}
 	}
 }
 
 print LMPOUT "\nAtoms\n\n";
 for ($i = 0; $i < $atoms; $i++) {
-	print LMPOUT "\t$i\t1\t$typehash{$type[$i]}\t$charge{$type[$i]}\t$x[$i]\t$y[$i]\t$z[$i]\n";
+	$j = $i +1;
+	print LMPOUT "\t$j\t1\t$typehash{$type[$i]}\t$charge{$type[$i]}\t$x[$i]\t$y[$i]\t$z[$i]\n";
 }
 
 
 print LMPOUT "\nBonds\n\n";
-$currbond =0;
+$currbond =1;
 for($i = 0; $i < $atoms; $i++) {
 	@neigh = split(/\s+/, $bonds[$i]);
 	foreach(@neigh) {
 		if ($_ > $i) {
+			$j = $i + 1;
+			$k = $_ + 1;
 			$throw = "$type[$i]-$type[$_]";
 			$throw2 = "$type[$_]-$type[$i]";
 			if (defined($bondtype{$throw})) {
 #			print "$throw = $type[$i] -> $type[$_]\n";
-			print LMPOUT "\t$currbond\t$bondtype{$throw}\t$i\t$_\n";
+			print LMPOUT "\t$currbond\t$bondtype{$throw}";
 			} elsif(defined($bondtype{$throw2})) {
 #				print "reversed $throw2 = $type[$_] -> $type[$i]\n";
-				print  LMPOUT "\t$currbond\t$bondtype{$throw2}\t$i\t$_\n";
+				print  LMPOUT "\t$currbond\t$bondtype{$throw2}";
 			} else {
 				# problem type is likely to be the shorter one (and oxygen or carbon or something)
 				$probtype = (length($type[$_]) > length($type[$i]))? $type[$i]: $type[$_];
@@ -224,15 +238,14 @@ for($i = 0; $i < $atoms; $i++) {
 					chomp($choice = <STDIN>);
 					print "Chosen $match[$choice]\n";
 				} else { $choice = 0;}
-					print LMPOUT "\t$currbond\t$bondtype{$match[$choice]}\t$i\t$_\n";
-					
-				
-				
-			}
+					print LMPOUT "\t$currbond\t$bondtype{$match[$choice]}";
+				}
+				print LMPOUT "\t$j\t$k # $type[$_] -> $type[$i] \n";
 			$currbond++;
 		}
 	}
 }
+
 
 
 
