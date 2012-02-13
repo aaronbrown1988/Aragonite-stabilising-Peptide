@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 use POSIX;
 
+$kj = 96.4853365;
+
+
+
 print  "USAGE tinker.xyz ff_directory lmpfile\n";
 
 my @type;
@@ -82,9 +86,9 @@ while($line = readline(FF)) {
 		$charge{$cur_type} = 0.0;
 		chomp($cur_eps);
 		$charge{$cur_type} = $cur_charge;
-		$sig{$cur_type} = $cur_sigma;
+		$sig{$cur_type} = $cur_sigma*10;
 		$cur_eps =~ s/ .*//;
-		$eps{$cur_type} = $cur_eps;
+		$eps{$cur_type} = $cur_eps/$kj;
 	}
 	
 }
@@ -142,6 +146,8 @@ while ($line = readline(FF)) {
 		if(!defined($bondtype{"$atype-$btype"})) {
 			$bondtype{"$atype-$btype"} = $curr_bond;
 			$bondfunc[$curr_bond] = $cur_type;
+			$curr_kb = 0.01*$curr_kb/$kj;
+			$curr_b0 *= 10;
 			print LMPOUT "\t$curr_bond\t$curr_kb\t$curr_b0\n";
 			$curr_bond++;
 		}
@@ -160,6 +166,9 @@ while($line = readline(FF)) {
 		($atype, $btype, $ctype, $cur_type, $th0, $cth, $ub, $cub) = split(/\s+/, $line);
 		if(!defined($angletype{"$atype-$btype-$ctype"})) {
 			$angletype{"$atype-$btype-$ctype"} = $curr_angle;
+			$cth = $cth / $kj;
+			$cub = $cub/ $kj;
+			$ub *= 10;
 			print LMPOUT "\t$curr_angle\t$cth\t$th0\t$cub\t$ub # $atype-$btype-$ctype\n";
 			$curr_angle++;
 		}
@@ -180,6 +189,7 @@ while($line = readline(FF)) {
 			if ($cur_type == 9) {
 				$phi = floor($phi);
 				$phi =~ s/\..*//;
+				$cp = $cp/$kj;
 				print LMPOUT "\t$curr_dihedral\t$cp\t$mult\t$phi\t0.0 # $atype-$btype-$ctype-$dtype \n";
 				$curr_dihedral++;
 			}
@@ -197,6 +207,7 @@ for ($i = 0; $i < $atoms; $i++) {
 print LMPOUT "\nBonds\n\n";
 $currbond =1;
 for($i = 0; $i < $atoms; $i++) {
+	if (length($bonds[$i]) < 1) { continue;}
 	@neigh = split(/\s+/, $bonds[$i]);
 	foreach(@neigh) {
 		if ($_ > $i) {
