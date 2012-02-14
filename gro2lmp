@@ -1,297 +1,494 @@
 #!/usr/bin/perl
+
 use POSIX;
 
-$kj = 96.4853365;
-
-
-
-print  "USAGE tinker.xyz ff_directory lmpfile\n";
-
-my @type;
-my @atom;
-my @x, @y, @z;
+my @residues, @atoms, @x, @y, @z, @bonds, @angles, @dihedrals, @cmaps; #System stuff
+my %mass, %charge, %sig, %eps, %sig14, %eps14; # force-field stuffs
+my %phi, %multi, %cp ,%th, %cth, %cub, %ub, %kb, %b0, %dihF;
+my %typeconv, %bondtypes, %angletypes, %dihtypes;
 my $box_x, $box_y, $box_z;
-my $curr_x, $curr_y, $curr_z;
+my $nAtoms, $nBonds, $nAngles, $nDih;
+my $nPt, $nBt, $nDt, $nAt;
 
 
-print "I was passed: @ARGV \n";
 
 
-open(GRO, @ARGV[0]) || die "couldn't open @_[0]\n";
-#open(LMPIN, @ARGV[2]) || die "couldn't open @_[2]\n";
-open (LMPOUT, ">out.lmp");
-
-
-if ( !(-d $ARGV[1])) {
-	die "Folder does not exsit\n";
+sub build_lut{
+	local $i, $j,$n, $tmp;
+	$n = 1;
+	#print keys(%kb);
+	foreach (@bonds) {
+		($i, $j) = split(/-/, $_);
+		$i = $atoms[$i-1];
+		$j = $atoms[$j-1];
+	#	print "BUILD_LUT: $i-$j\n";
+		if (defined($b0{"$i-$j"}) && !defined($bondtypes{"$i-$j"})) {
+			$bondtypes{"$i-$j"} = $n;
+			$n++;
+		} elsif(defined($b0{"$j-$i"}) && !defined($bondtypes{"$j-$i"})) {
+			$bondtypes{"$j-$i"} = $n;
+			$n++; 
+		}
+	}
+	$nBt = $n-1;
+	
+	$n = 1; 
+	foreach (@angles) {
+		($i, $j,$k) = split(/-/, $_);
+		$i = $atoms[$i-1];
+		$j = $atoms[$j-1];
+		$k = $atoms[$k-1];
+		if (defined($ub{"$i-$j-$k"}) && !defined($angletypes{"$i-$j-$k"})) {
+			$angletypes{"$i-$j-$k"} = $n;
+			$n++;
+		} elsif (defined($ub{"$k-$j-$i"}) && !defined($angletypes{"$k-$j-$i"})) {
+			$angletypes{"$k-$j-$i"} = $n;
+			$n++;
+		}
+		
+	}
+	$nAt = $n-1;
+	
+	$n = 1; 
+	foreach (@dihedrals) {
+		($i, $j,$k,$l) = split(/-/, $_);
+		$i = $atoms[$i-1];
+		$j = $atoms[$j-1];
+		$k = $atoms[$k-1];
+		$l = $atoms[$l-1];
+		if (defined($phi{"$i-$j-$k-$l"}) && !defined($dihtypes{"$i-$j-$k-$l"})) {
+			$dihtypes{"$i-$j-$k-$l"} = $n;
+			$n++;
+		} elsif (defined($phi{"$l-$k-$j-$i"}) && !defined($dihtypes{"$l-$k-$j-$i"})) {
+			$dihtypes{"$l-$k-$j-$i"} = $n;
+			$n++;
+		} elsif(defined($phi{"X-$j-$k-X"}) && !defined($dihtypes{"X-$j-$k-X"})) {
+			$dihtypes{"X-$j-$k-X"} = $n;
+			$n++;
+		}elsif(defined($phi{"X-$k-$j-X"}) && !defined($dihtypes{"X-$k-$j-X"})) {
+			$dihtypes{"X-$k-$j-X"} = $n;
+			$n++;
+		}
+		
+	}
+	$nDt = $n-1;
+	
+			
+	
 }
 
-$line = readline(GRO);
-chomp($line);
-($throw, $atoms, $name) = split(/\s+/, $line);
 
 
-print "There are $atoms in $name..apparently";
 
-while($line = readline(GRO)) {
-	($throw, $index, $cur_type, $cur_x, $cur_y, $cur_z, $throw, @neigh) = split(/\s+/, $line);
-	print "$index is bonded to : @neigh\n";
-	if($line =~ /.*[A-Z].*/) {
-		push(@type,$cur_type);
+
+
+sub parse_gro  {
+	local $i, $j,$tmp;
+	local $line;
+	local $cur_res, $cur_type, $cur_x, $cur_y, $cur_z;
+	open(GRO, "$ARGV[1]") || die "couldn't open $ARGV[1]\n";
+	$line = readline(GRO);
+	$nAtoms = readline(GRO);
+	$nAtoms =~ s/\s+//g;
+	$j =1;
+	chomp($nAtoms);
+	for ( $i = 0; $i < $nAtoms; $i++) {
+		$line = readline(GRO);
+		($tmp,$cur_res, $cur_type, $j, $cur_x, $cur_y, $cur_z) = split(/\s+/, $line);	
 		push(@x,$cur_x);
 		push(@y,$cur_y);
 		push(@z,$cur_z);
-		push(@bonds, "@neigh");
+		push(@residues, $cur_res);
+		
 	}
-	$box_x = $cur_res;
-	$box_y = $cur_type;
-	$box_z = $i;
+	$line = readline(GRO);
+	($tmp,$box_x, $box_y, $box_z)  = split(/\s+/, $line);
+	
+	close(GRO);
 }
 
-close(GRO);
-
-
-# Get Masses from atomtypes.atp
-
-open(FF, "$ARGV[1]/atomtypes.atp") || die "Couldn't open atomtypes.atp\n";
-while ($line = readline(FF)) {
-	($cur_type, $cur_mass, $throw) = split(/\s+/, $line);
-	if(!defined($mass{$cur_type})) {
+sub parse_atoms {
+	local $i,$tmp;
+	local $cur_res, $cur_type, $cur_resnr, $cur_restype, $cur_cgnr, $cur_charge, $cur_mass;
+	
+	open(TOP, "$ARGV[2]") || die "couldn't open $ARGV[1]\n";
+	#Go to atoms section;
+	while ($line = readline(TOP)) {
+		if ($line =~ /.*atoms.*/) {
+			last;
+		}
+	}
+	$j = 1;
+	while ($line = readline(TOP)) {
+		if ($line =~ /^[;]/) { next;} # Skip anything commented out.
+		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
+		$line =~ s/;.*//; # Throw any trailing comments away
+		
+		($tmp, $i, $cur_type, $cur_resnr, $cur_restype, $tmp,$cur_cgnr, $cur_charge, $cur_mass) = split(/\s+/, $line);
+		
+		push(@atoms,$cur_type);
+		if (!defined($typeconv{$cur_type})) {
+			$typeconv{$cur_type} = $j;
+			$j++;
+		}
+		
+		# Only things were really interested in is charge and mass;
 		$mass{$cur_type} = $cur_mass;
-	}
-}
-close(FF);
-
-print LMPOUT "\nMasses\n\n";
-$currtype = 1;
-foreach  (@type) {
-	if (!defined($typehash{$_})) {
-		print LMPOUT "\t$currtype\t$mass{$_}\t#$_\n";
-		
-		$typehash{$_} = $currtype;
-		$currtype ++
-	}
-}			
-
-
-
-open(FF, "$ARGV[1]/ffnonbonded.itp") || die "Couldn't open ffnonbonded.itp\n";
-readline(FF);
-readline(FF);
-while($line = readline(FF)) {
-	if (length($line) < 3 ){ last;}
-	if ($line =~ /^[^#; ].*/) {
-		($cur_type, $cur_at, $cur_mas, $cur_charge, $cur_p, $cur_sigma, $cur_eps, $throw) = split(/\t/, $line);
-		print "$line=> $cur_type, $cur_at,$cur_mas,$cur_charge\n";
-		$charge{$cur_type} = 0.0;
-		chomp($cur_eps);
 		$charge{$cur_type} = $cur_charge;
-		$sig{$cur_type} = $cur_sigma*10;
-		$cur_eps =~ s/ .*//;
-		$eps{$cur_type} = $cur_eps/$kj;
+	}
+	close(TOP);
+}
+
+sub parse_bonds {
+	local $i, $j, $tmp, $func;
+	$nBonds = 0;
+	open(TOP, "$ARGV[2]") || die "couldn't open $ARGV[2] for bond parsing";
+	while ($line = readline(TOP)) {
+		if ($line =~ /.*bonds.*/) {
+			last;
+		}
+	}
+	while ($line = readline(TOP)) {
+		if ($line =~ /^;/) { next;} # Skip anything commented out.
+		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
+		$line =~ s/;.*//; # Throw any trailing comments away
+		($tmp, $i, $j,$func) = split(/\s+/, $line);
+		push(@bonds, "$i-$j");
+		$nBonds++;
+	}
+	close(TOP);
+}
+		
+sub parse_angles {
+	local $i, $j, $k,$tmp, $func;
+	open(TOP, "$ARGV[2]") || die "couldn't open $ARGV[2] for angle parsing";
+	while ($line = readline(TOP)) {
+		if ($line =~ /.*angles.*/) {
+			last;
+		}
+	}
+	$nAngles =0;
+	while ($line = readline(TOP)) {
+		if ($line =~ /^;/) { next;} # Skip anything commented out.
+		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
+		$line =~ s/;.*//; # Throw any trailing comments away
+		($tmp, $i, $j,$k,$func) = split(/\s+/, $line);
+		push(@angles, "$i-$j-$k");
+		$nAngles ++;
+	}
+	close(TOP);
+}
+
+sub parse_dih {
+	local $i, $j, $k,$l,$tmp, $func;
+	open(TOP, "$ARGV[2]") || die "couldn't open $ARGV[2] for angle parsing";
+	while ($line = readline(TOP)) {
+		if ($line =~ /.*dihedrals.*/) {
+			last;
+		}
+	}
+	$nDih =0;
+	while ($line = readline(TOP)) {
+		
+		if ($line =~ /^;/) { next;} # Skip anything commented out.
+		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
+		$line =~ s/;.*//; # Throw any trailing comments away
+		($tmp, $i, $j,$k,$l,$func) = split(/\s+/, $line);
+		
+		push(@dihedrals, "$i-$j-$k-$l");
+		$nDih ++;
+	}
+	close(TOP);
+}
+
+sub parse_cmap {
+	local $i, $j, $k,$l,$m,$tmp, $func;
+	open(TOP, "$ARGV[2]") || die "couldn't open $ARGV[2] for angle parsing";
+	while ($line = readline(TOP)) {
+		if ($line =~ /.*dihedrals.*/) {
+			last;
+		}
+	}
+	$nCMAP =0;
+	while ($line = readline(TOP)) {
+		if ($line =~ /^[;]/) { next;} # Skip anything commented out.
+		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
+		$line =~ s/;.*//; # Throw any trailing comments away
+		($tmp, $i, $j,$k,$l,$m,$func) = split(/\s+/, $line);
+		push(@cmaps, "$i-$j-$k-$l-$m");
+		$nCMAP ++;
+	}
+	close(TOP);
+}	
+
+
+sub parse_nonb {
+	open(FF, "$ARGV[3]/ffnonbonded.itp") || die "Couldn't open $ARGV[3]ffnonbonded.itp\n";
+	readline(FF);
+	readline(FF);
+	while($line = readline(FF)) {
+		if (length($line) < 3 ){ last;}
+		if ($line =~ /^[^#; ].*/) {
+			($cur_type, $cur_at, $cur_mas, $cur_charge, $cur_p, $cur_sigma, $cur_eps, $throw) = split(/\t/, $line);
+			chomp($cur_eps);
+			$sig{$cur_type} = $cur_sigma;
+			$cur_eps =~ s/ .*//;
+			$eps{$cur_type} = $cur_eps;
+		}
+		
 	}
 	
+	while ($line = readline(FF)) {
+		if($line=~ /.*pairtypes.*/) { readline(FF);last;}
+	}
+	$nPt = 1;
+	while($line = readline(FF)) {
+		if(length($line) < 3){last;}
+		if($line =~ /^[^#; ].*/) {
+			($atype, $btype, $curtype, $cur_sig, $cur_eps) = split(/\s+/, $line);
+			$sig14{"$atype-$btype"} = $cur_sig;
+			$eps14{"$atype-$btype"} = $cur_eps;
+			$nPt++;
+		}
+	}
+	close(FF);
 }
 
-
-
-#Move to Pair Types
-while ($line = readline(FF)) {
-	if($line=~ /.*pairtypes.*/) { readline(FF);last;}
-}
-$curr_pair = 1;
-print LMPOUT "\nPair Coeffs\n\n";
-while($line = readline(FF)) {
-	if(length($line) < 3){last;}
-	if($line =~ /^[^#; ].*/) {
-		($atype, $btype, $curtype, $cur_sig, $cur_eps) = split(/\s+/, $line);
-		
-		if(defined($typehash{$atype}) && ($atype eq $btype)) {
-			$epsfudge = sqrt($eps{$atype}*$eps{$btype});
-			if ($psfudge==0) {
-				print "$atype $eps{$atype} $btype $eps{$btype}\n";
+sub parse_bonded {
+	open(FF, "$ARGV[3]/ffbonded.itp") || die "Couldn't open ffbonded.itp\n";
+	readline(FF);
+	readline(FF);
+	#
+	# Perl hashes are probably not the best way for this. But it'll do.
+	#
+	$nBt = 1;
+	while ($line = readline(FF)) {
+		if(length($line) < 3){last;}
+		if($line =~ /^[^#; ].*/) {
+			($atype, $btype, $cur_type, $curr_b0, $curr_kb) = split(/\s+/, $line);
+			if(!defined($bondtype{"$atype-$btype"})) {
+				$bondtype{"$atype-$btype"} = $curr_bond;
+				$bondfunc[$curr_bond] = $cur_type;
+				$b0{"$atype-$btype"} = $curr_b0;
+				$kb{"$atype-$btype"} = $curr_kb;
+				$nBt++;
 			}
-			$sigfudge = 0.5*($sig{$atype}+$sig{$btype});
-			print LMPOUT "\t$typehash{$atype}\t$epsfudge\t$sigfudge\t$cur_sig\t$cur_eps # $atype-$btype\n";
-			$curr_pair++;
 		}
 	}
-}
-foreach  (keys(%typehash)) {
-	$epsfudge = sqrt($eps{$_}*$eps{$_});
-	$sigfudge = 0.5*($sig{$_}+$sig{$_});
-	print LMPOUT "\t$typehash{$_}\t$eps{$_}\t$sig{$_} # \n";
-}
-
-
-
-
-
-
-
-
-open(FF, "$ARGV[1]/ffbonded.itp") || die "Couldn't open $ARGV[1]/ffbonded.itp";
-readline(FF);
-readline(FF);
-#
-# Perl hashes are probably not the best way for this. But it'll do.
-#
-
-$curr_bond = 1;
-print LMPOUT "\nBond Coeffs\n\n";
-while ($line = readline(FF)) {
-	if(length($line) < 3){last;}
-	if($line =~ /^[^#; ].*/) {
-		($atype, $btype, $cur_type, $curr_b0, $curr_kb) = split(/\s+/, $line);
-		if(!defined($bondtype{"$atype-$btype"})) {
-			$bondtype{"$atype-$btype"} = $curr_bond;
-			$bondfunc[$curr_bond] = $cur_type;
-			$curr_kb = 0.5*0.01*$curr_kb/$kj;
-			$curr_b0 *= 10;
-			print LMPOUT "\t$curr_bond\t$curr_kb\t$curr_b0\n";
-			$curr_bond++;
+	
+	#Move to Angles 
+	while ($line = readline(FF)) {
+		if($line=~ /.*angletypes.*/) { readline(FF);last;}
+	}
+	$nAt = 1;
+		while($line = readline(FF)) {
+		if(length($line) < 3){last;}
+		if($line =~ /^[^#; ].*/) {
+			($atype, $btype, $ctype, $cur_type, $cur_th0, $cur_cth, $cur_ub, $cur_cub) = split(/\s+/, $line);
+			$th{"$atype-$btype-$ctype"} = $cur_th0;
+			$cth{"$atype-$btype-$ctype"} = $cur_cth;
+			$cub{"$atype-$btype-$ctype"} = $cur_cub;
+			$ub{"$atype-$btype-$ctype"}= $cur_ub;
+			$nAt++;
 		}
 	}
-}
-
-#Move to Angles 
-while ($line = readline(FF)) {
-	if($line=~ /.*angletypes.*/) { readline(FF);last;}
-}
-$curr_angle = 1;
-print LMPOUT "\nAngle Coeffs\n\n";
-while($line = readline(FF)) {
-	if(length($line) < 3){last;}
-	if($line =~ /^[^#; ].*/) {
-		($atype, $btype, $ctype, $cur_type, $th0, $cth, $ub, $cub) = split(/\s+/, $line);
-		if(!defined($angletype{"$atype-$btype-$ctype"})) {
-			$angletype{"$atype-$btype-$ctype"} = $curr_angle;
-			$cth = $cth / $kj;
-			$cub = 0.1*$cub/ $kj;
-			$ub *= 10;
-			print LMPOUT "\t$curr_angle\t$cth\t$th0\t$cub\t$ub # $atype-$btype-$ctype\n";
-			$curr_angle++;
-		}
+	
+	#Move to Dihedrals
+	while ($line = readline(FF)) {
+		if($line=~ /.*dihedraltypes.*/) { readline(FF);last;}
 	}
-}
-
-#Move to Dihedrals
-while ($line = readline(FF)) {
-	if($line=~ /.*dihedraltypes.*/) { readline(FF);last;}
-}
-$curr_dihedral = 1;
-print LMPOUT "\nDihedral Coeffs\n\n";
-while($line = readline(FF)) {
-	if(length($line) < 3){last;}
-	if($line =~ /^[^#; ].*/) {
-		($atype, $btype, $ctype, $dtype, $cur_type, $phi, $cp, $mult) = split(/\s+/,$line);
-		if(!defined($dihedtype{"$atype-$btype-$ctype-$dtype"})) {
+	$nDt = 1;
+	while($line = readline(FF)) {
+		if(length($line) < 3){last;}
+		if($line =~ /^[^#; ].*/) {
+			($atype, $btype, $ctype, $dtype, $cur_type, $cur_phi, $cur_cp, $cur_mult) = split(/\s+/,$line);
 			if ($cur_type == 9) {
-				$phi = floor($phi);
-				$phi =~ s/\..*//;
-				$cp = $cp/$kj;
-				print LMPOUT "\t$curr_dihedral\t$cp\t$mult\t$phi\t0.0 # $atype-$btype-$ctype-$dtype \n";
-				$curr_dihedral++;
-			}
-		}
-	}
-}
-
-print LMPOUT "\nAtoms\n\n";
-for ($i = 0; $i < $atoms; $i++) {
-	$j = $i +1;
-	print LMPOUT "\t$j\t1\t$typehash{$type[$i]}\t$charge{$type[$i]}\t$x[$i]\t$y[$i]\t$z[$i]\n";
-}
-
-
-print LMPOUT "\nBonds\n\n";
-$currbond =1;
-for($i = 0; $i < $atoms; $i++) {
-	if (length($bonds[$i]) < 1) { 
-		next; 
-	}
-	@neigh = split(/\s+/, $bonds[$i]);
-	foreach(@neigh) {
-		if ($_ > $i) {
-			$j = $i + 1;
-			$k = $_ + 1;
-			$throw = "$type[$i]-$type[$_]";
-			$throw2 = "$type[$_]-$type[$i]";
-			if (defined($bondtype{$throw})) {
-#			print "$throw = $type[$i] -> $type[$_]\n";
-			print LMPOUT "\t$currbond\t$bondtype{$throw}";
-			} elsif(defined($bondtype{$throw2})) {
-#				print "reversed $throw2 = $type[$_] -> $type[$i]\n";
-				print  LMPOUT "\t$currbond\t$bondtype{$throw2}";
-			} else {
-				# problem type is likely to be the shorter one (and oxygen or carbon or something)
-				$probtype = (length($type[$_]) > length($type[$i]))? $type[$i]: $type[$_];
-				$goodtype = ($probtype eq $type[$_])? $type[$i]: $type[$_];
+				$tmp = "$atype-$btype-$ctype-$dtype";
+				$cur_phi = floor($cur_phi);
+				$cur_phi =~ s/\..*//;
+				$phi{$tmp} = $cur_phi;
+				$cp{$tmp} =  $cur_cp;
+				$multi{$tmp} = $cur_mult;
+				$nDt++;
 				
-				$probtype = substr($probtype, 0,1);
-				print "Unknown type :(  $type[$_] -> $type[$i]\n";
-				print "decided $probtype is likely to be specified incorrectly\n";
-				print "and $goodtype is ok\n";
-				$matches=0;
-				my @match;
-				foreach $test_key (keys %bondtype) {
-					if($test_key =~ /$goodtype-$probtype.+/) {
-						print "$matches $test_key is possible match\n";
-						$match[$matches] = $test_key;
-						$matches++;
-					}
-					if($test_key =~ /$probtype.-$goodtype/) {
-						print "$matches $test_key is possible match\n";
-						$match[$matches] = $test_key;
-						$matches++;
-					}
-				}
-				if ($matches > 1) {
-					print "Which match would you like?: ";
-					chomp($choice = <STDIN>);
-					print "Chosen $match[$choice]\n";
-				} else { $choice = 0;}
-					print LMPOUT "\t$currbond\t$bondtype{$match[$choice]}";
-				}
-				print LMPOUT "\t$j\t$k # $type[$_] -> $type[$i] \n";
-			$currbond++;
-		}
-	}
-}
-
-
-
-# Work out angles:
-print "\nAngles\n\n";
-$angles=1;
-for($i = 1; $i <= $atoms; $i++) {
-	if (length($bonds[$i-1]) < 3) { 
-		next; 
-	}
-	@neigh = split(/\s+/, $bonds[$i-1]);
-	for( $j = 0; $j <scalar @neigh; $j++) {
-		for ($k = $j+1; $k < scalar @neigh; $k++) {
-			$throw="$type[$neigh[$k]]-$type[$i-1]-$type[$neigh[$j]]";
-			$throw2="$type[$neigh[$j]]-$type[$i-1]-$type[$neigh[$k]]";
-			if (defined($angletype{$throw}))  {
-				print "\t$angles\t$angletype{$throw}\t$neigh[$k]\t$i\t$neigh[$j]\n";
-				$angles++;
-			} elsif (defined($angletype{$throw2})) {
-				print "\t$angles\t$angletype{$throw2}\t$neigh[$j]\t$i\t$neigh[$k]\n";
-				$angles++;
-			} else {
-				print "$throw not found :( \n ";
 			}
 		}
-		
+	}
+}
+
+sub to_types {
+	local @i,$tmp;
+	$line = @_[0];
+	@i = split(/-/, $line);
+	$line="";
+	foreach $tmp (@i) {
+		#print "$tmp\n";
+		$line = "$line-$atoms[$tmp-1]";
+	}
+	$line =~ s/^-//;
+	#print "TO_TYPES: $line from @_[0]\n";
+	
+	return($line);
+}
+
+sub conversion {
+	local $kj = 96.4853365;
+	#Convert all units - :(
+	
+	#b0 nm -> A
+	foreach (keys(%b0)) {
+		$b0{$_} *= 10;
+	}
+	#kb Kj/mol nm^-2 ev/A^2
+	foreach (keys(%kb)) {
+		$kb{$_} = $kb{$_}/$kj*0.01;
 	}
 	
+	#cth Kj/mol -> eV
+	foreach (keys(%cth)) {
+		$cth{$_} /= $kj;
+	}
 	
+	#cub Kj/Mol /nm -> eV/A
+	foreach (keys(%cub)) {
+		$cub{$_} *= 0.1/$kj;
+	}
+	
+	#ub nm -> A
+	foreach (keys(%ub)) {
+		$ub{$_} *= 0.1/$kj;
+	}
+	
+	#sig Kj/mol -> eV
+	foreach (keys(%sig)) {
+		$sig{$_} /= $kj;
+	}
+	
+	#eps nm -> A
+	foreach (keys(%eps)) {
+		$eps{$_} *= 10;
+	}
+	
+	# Positions nm -> A
+	for ($i =0; $i < $nAtoms; $i ++) {
+		$x[$i] *= 10;
+		$y[$i] *= 10;
+		$z[$i] *= 10;
+	}
+	
+	$box_x *= 10;
+	$box_y *= 10;
+	$box_z *= 10;
+
 }
 
 
 
 
+parse_gro();
 
-#open(FFNONBONDED, "$ARGV[1]/ffnonbonded.itp") || die "Couldn't open $ARGV[2]/ffnonbonded.itp";
+parse_atoms();
+parse_angles();
+
+parse_bonds();
+parse_cmap();
+parse_dih();
+
+
+parse_nonb();
+parse_bonded();
+
+build_lut();
+conversion();
+
+
+#Output stage
+
+print "LAMMPS description\n";
+print "\n";
+print "$nAtoms atoms\n";
+print "$nBonds bonds\n";
+print "$nAngles angles\n";
+print "$nDih dihedrals\n";
+$i = scalar keys(%mass);
+print "$i atom types\n";
+print "$nDt dihedral types\n";
+print "$nAt angle types\n";
+print "$nBt bond types\n";
+
+
+print "\n";
+print "0 $box_x xlo xhi\n";
+print "0 $box_y ylo yhi\n";
+print "0 $box_z zlo zhi\n";
+
+print "\n";
+
+print "Masses\n\n";
+$i = 1;
+foreach (keys(%mass)) {
+	print "\t$i\t$mass{$_}\t# $_\n";
+	$i++;
+}
+print "\nPair Coeffs\n\n";
+$i = 1;
+foreach $_ (keys(%mass)) {
+	print  "\t$i\t$eps{$_}\t$sig{$_}\n";
+	$i++
+}
+
+print "\n\nBond Coeffs\n\n";
+foreach $_ (keys(%bondtypes)) {
+	print "\t$bondtypes{$_}\t$kb{$_}\t$b0{$_}\n";
+}
+
+print "\nAngle Coeffs\n\n";
+foreach $_ (keys(%angletypes)) {
+	print "\t$angletypes{$_}\t$th{$_}\t$cth{$_}\t$cub{$_}\t$ub{$_}\n";
+}
+
+print "\nDihedral Coeffs\n\n";
+foreach $_ (keys(%dihtypes)) {
+	print "\t$dihtypes{$_}\t$cp{$_}\t$multi{$_}\t$phi{$_}\t1.0\n";
+}
+
+
+print "\nAtoms\n\n";
+
+for($i =1; $i<=$nAtoms; $i++) {
+	print "\t$i\t1\t$typeconv{$atoms[$i-1]}\t$charge{$atoms[$i-1]}\t$x[$i-1]\t$y[$i-1]\t$z[$i-1]# $atoms[$i-1]\n";
+}
+print "\nBonds\n\n";
+$k=1;
+
+foreach $_ (@bonds) {
+	($i, $j) = split(/-/, $_);
+	$tmp = (defined($bondtypes{to_types($_)}))? $bondtypes{to_types($_)}: $bondtypes{to_types("$j-$i")};
+	print "\t$k\t$tmp\t$i\t$j\n";
+	$k++;
+}
+
+print "\nAngles\n\n";
+$l=1;
+
+foreach $_ (@angles) {
+	($i, $j,$k) = split(/-/, $_);
+	$tmp = (defined($angletypes{to_types($_)}))? $angletypes{to_types($_)}: $angletypes{to_types("$k-$j-$i")};
+	print "\t$l\t$tmp\t$i\t$j\t$k\n";
+	$l++;
+}
+
+print "\nDihedrals\n\n";
+$h = 1;
+foreach $_ (@dihedrals) {
+	($i, $j, $k,$l) = split(/-/,$_);
+	$tmp = (defined($dihtypes{to_types($_)}))? $dihtypes{to_types($_)}: $dihtypes{to_types("$l-$k-$j-$i")};
+	if ($tmp eq "") {
+		$tmp = (defined($dihtypes{to_types("X-$j-$k-X")}))? $dihtypes{to_types("X-$j-$k-X")}: $dihtypes{to_types("X-$k-$j-X")};
+	}
+	print "\t$h\t$tmp\t$i\t$j\t$k\t$l\n";
+	$h++;
+}
+
+
 
