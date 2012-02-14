@@ -146,7 +146,7 @@ while ($line = readline(FF)) {
 		if(!defined($bondtype{"$atype-$btype"})) {
 			$bondtype{"$atype-$btype"} = $curr_bond;
 			$bondfunc[$curr_bond] = $cur_type;
-			$curr_kb = 0.01*$curr_kb/$kj;
+			$curr_kb = 0.5*0.01*$curr_kb/$kj;
 			$curr_b0 *= 10;
 			print LMPOUT "\t$curr_bond\t$curr_kb\t$curr_b0\n";
 			$curr_bond++;
@@ -167,7 +167,7 @@ while($line = readline(FF)) {
 		if(!defined($angletype{"$atype-$btype-$ctype"})) {
 			$angletype{"$atype-$btype-$ctype"} = $curr_angle;
 			$cth = $cth / $kj;
-			$cub = $cub/ $kj;
+			$cub = 0.1*$cub/ $kj;
 			$ub *= 10;
 			print LMPOUT "\t$curr_angle\t$cth\t$th0\t$cub\t$ub # $atype-$btype-$ctype\n";
 			$curr_angle++;
@@ -207,7 +207,9 @@ for ($i = 0; $i < $atoms; $i++) {
 print LMPOUT "\nBonds\n\n";
 $currbond =1;
 for($i = 0; $i < $atoms; $i++) {
-	if (length($bonds[$i]) < 1) { continue;}
+	if (length($bonds[$i]) < 1) { 
+		next; 
+	}
 	@neigh = split(/\s+/, $bonds[$i]);
 	foreach(@neigh) {
 		if ($_ > $i) {
@@ -257,6 +259,35 @@ for($i = 0; $i < $atoms; $i++) {
 	}
 }
 
+
+
+# Work out angles:
+print "\nAngles\n\n";
+$angles=1;
+for($i = 1; $i <= $atoms; $i++) {
+	if (length($bonds[$i-1]) < 3) { 
+		next; 
+	}
+	@neigh = split(/\s+/, $bonds[$i-1]);
+	for( $j = 0; $j <scalar @neigh; $j++) {
+		for ($k = $j+1; $k < scalar @neigh; $k++) {
+			$throw="$type[$neigh[$k]]-$type[$i-1]-$type[$neigh[$j]]";
+			$throw2="$type[$neigh[$j]]-$type[$i-1]-$type[$neigh[$k]]";
+			if (defined($angletype{$throw}))  {
+				print "\t$angles\t$angletype{$throw}\t$neigh[$k]\t$i\t$neigh[$j]\n";
+				$angles++;
+			} elsif (defined($angletype{$throw2})) {
+				print "\t$angles\t$angletype{$throw2}\t$neigh[$j]\t$i\t$neigh[$k]\n";
+				$angles++;
+			} else {
+				print "$throw not found :( \n ";
+			}
+		}
+		
+	}
+	
+	
+}
 
 
 
