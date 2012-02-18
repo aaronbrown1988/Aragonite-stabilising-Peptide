@@ -341,7 +341,7 @@ sub conversion {
 	}
 	#kb Kj/mol nm^-2 ev/A^2
 	foreach (keys(%kb)) {
-		$kb{$_} = $kb{$_}/$kj*0.01;
+		$kb{$_} = $kb{$_}/($kj/0.01);
 	}
 	
 	#cth Kj/mol -> eV
@@ -349,19 +349,20 @@ sub conversion {
 		$cth{$_} /= $kj;
 	}
 	
-	#cub Kj/Mol /nm -> eV/A
+	#cub Kj/Mol /nm^2 -> eV/A^2
 	foreach (keys(%cub)) {
-		$cub{$_} *= 0.1/$kj;
+		$cub{$_} /= ($kj/0.01);
 	}
 	
 	#ub nm -> A
 	foreach (keys(%ub)) {
-		$ub{$_} *= 0.1/$kj;
+		$ub{$_} *= 10;
 	}
 	
 	#sig Kj/mol -> eV
 	foreach (keys(%sig)) {
 		$sig{$_} /= $kj;
+		$sig{$_} *=  2.0**(5/6);
 	}
 	
 	#eps nm -> A
