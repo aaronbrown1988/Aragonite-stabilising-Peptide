@@ -2,13 +2,13 @@
 
 use POSIX;
 
-my @residues, @atoms, @x, @y, @z, @bonds, @angles, @dihedrals, @cmaps; #System stuff
+my @residues, @atoms, @x, @y, @z, @bonds, @angles, @dihedrals, @cmaps,@impropers; #System stuff
 my %mass, %charge, %sig, %eps, %sig14, %eps14; # force-field stuffs
-my %phi, %multi, %cp ,%th, %cth, %cub, %ub, %kb, %b0, %dihF;
-my %typeconv, %bondtypes, %angletypes, %dihtypes;
+my %phi,%imp_phi,%multi, %cp,%imp_cp ,%th, %cth, %cub, %ub, %kb, %b0, %dihF;
+my %typeconv, %bondtypes, %angletypes, %dihtypes, %imptypes;
 my $box_x, $box_y, $box_z;
-my $nAtoms, $nBonds, $nAngles, $nDih;
-my $nPt, $nBt, $nDt, $nAt;
+my $nAtoms, $nBonds, $nAngles, $nDih,$nImp;
+my $nPt, $nBt, $nDt, $nAt, $nIt;
 
 
 
@@ -73,6 +73,29 @@ sub build_lut{
 	}
 	$nDt = $n-1;
 	
+	$n=1;
+	foreach (@impropers) {
+		($i, $j,$k,$l) = split(/-/, $_);
+		$i = $atoms[$i-1];
+		$j = $atoms[$j-1];
+		$k = $atoms[$k-1];
+		$l = $atoms[$l-1];
+		if (defined($imp_phi{"$i-$j-$k-$l"}) && !defined($imptypes{"$i-$j-$k-$l"})) {
+			$imptypes{"$i-$j-$k-$l"} = $n;
+			$n++;
+		} elsif (defined($imp_phi{"$l-$k-$j-$i"}) && !defined($imptypes{"$l-$k-$j-$i"})) {
+			$imptypes{"$l-$k-$j-$i"} = $n;
+			$n++;
+		} elsif(defined($imp_phi{"$l-X-X-$i"}) && !defined($imptypes{"$l-X-X-$i"})) {
+			$imptypes{"$l-X-X-$i"} = $n;
+			$n++;
+		}elsif(defined($imp_phi{"$i-X-X-$l"}) && !defined($imptypes{"$i-X-X-$l"})) {
+			$imptypes{"$i-X-X-$l"} = $n;
+			$n++;
+		}
+		
+	}
+	$nIt = $n-1;
 			
 	
 }
@@ -134,7 +157,7 @@ sub parse_atoms {
 		
 		# Only things were really interested in is charge and mass;
 		$mass{$cur_type} = $cur_mass;
-		$charge{$cur_type} = $cur_charge;
+		$charge{$cur_type} = abs($cur_charge);
 	}
 	close(TOP);
 }
@@ -148,6 +171,7 @@ sub parse_bonds {
 			last;
 		}
 	}
+	
 	while ($line = readline(TOP)) {
 		if ($line =~ /^;/) { next;} # Skip anything commented out.
 		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
@@ -166,6 +190,10 @@ sub parse_angles {
 		if ($line =~ /.*angles.*/) {
 			last;
 		}
+	}
+	if (eof(TOP)) {
+		$nAngles =0;
+		return;
 	}
 	$nAngles =0;
 	while ($line = readline(TOP)) {
@@ -188,15 +216,39 @@ sub parse_dih {
 		}
 	}
 	$nDih =0;
+	$nImp=0;
 	while ($line = readline(TOP)) {
 		
 		if ($line =~ /^;/) { next;} # Skip anything commented out.
 		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
 		$line =~ s/;.*//; # Throw any trailing comments away
 		($tmp, $i, $j,$k,$l,$func) = split(/\s+/, $line);
+		if ($func == 9) {
+			push(@dihedrals, "$i-$j-$k-$l");
+			$nDih ++;
+		} elsif ($func == 2) {
+			push(@impropers, "$i-$j-$k-$l");
+			$nImp ++;
+		}
+	}
+	while ($line = readline(TOP)) {
+		if ($line =~ /.*dihedrals.*/) {
+			last;
+		}
+	}
+	while ($line = readline(TOP)) {
 		
-		push(@dihedrals, "$i-$j-$k-$l");
-		$nDih ++;
+		if ($line =~ /^;/) { next;} # Skip anything commented out.
+		if (length($line) < 3) { last ;}  # Don't carry on after a blank line.
+		$line =~ s/;.*//; # Throw any trailing comments away
+		($tmp, $i, $j,$k,$l,$func) = split(/\s+/, $line);
+		if ($func == 9) {
+			push(@dihedrals, "$i-$j-$k-$l");
+			$nDih ++;
+		} elsif ($func == 2) {
+			push(@impropers, "$i-$j-$k-$l");
+			$nImp ++;	
+		}
 	}
 	close(TOP);
 }
@@ -298,6 +350,7 @@ sub parse_bonded {
 		if($line=~ /.*dihedraltypes.*/) { readline(FF);last;}
 	}
 	$nDt = 1;
+	$nIt = 1;
 	while($line = readline(FF)) {
 		if(length($line) < 3){last;}
 		if($line =~ /^[^#; ].*/) {
@@ -311,9 +364,37 @@ sub parse_bonded {
 				$multi{$tmp} = $cur_mult;
 				$nDt++;
 				
+			} elsif( $cur_type ==2) {
+				$tmp = "$atype-$btype-$ctype-$dtype";
+				$imp_phi{$tmp} = $cur_phi;
+				$imp_cp{$tmp} =  $cur_cp;
+				
+				$nIt++;
 			}
 		}
 	}
+	
+	#Move to Improper Dihedrals
+	while ($line = readline(FF)) {
+		if($line=~ /.*dihedraltypes.*/) { readline(FF);last;}
+	}
+	
+	while($line = readline(FF)) {
+		if(length($line) < 3){last;}
+		if($line =~ /^[^#; ].*/) {
+			($atype, $btype, $ctype, $dtype, $cur_type, $cur_phi, $cur_cp) = split(/\s+/,$line);
+			if ($cur_type == 2) {
+				$tmp = "$atype-$btype-$ctype-$dtype";
+				$imp_phi{$tmp} = $cur_phi;
+				$imp_cp{$tmp} =  $cur_cp;
+				
+				$nIt++;
+				
+			}
+		}
+	}
+
+	
 }
 
 sub to_types {
@@ -323,13 +404,84 @@ sub to_types {
 	$line="";
 	foreach $tmp (@i) {
 		#print "$tmp\n";
-		$line = "$line-$atoms[$tmp-1]";
+		
+		$line = ($tmp ne "X")? "$line-$atoms[$tmp-1]":"$line-X";
 	}
 	$line =~ s/^-//;
 	#print "TO_TYPES: $line from @_[0]\n";
 	
 	return($line);
 }
+
+
+sub suggested_inp {
+	open(INP, ">suggested.inp") || die "Couldn't open suggested output file";
+	print  INP "log full\n";
+	print  INP "units metal\n";
+	print  INP "boundary  p p p\n";
+
+	print  INP "atom_style full\n";
+
+	print  INP "#neighbor 2.0 bin\n";
+	print  INP "neigh_modify delay 0 every 1 check yes\n";
+
+	print  INP "bond_style harmonic\n";
+	print  INP "angle_style charmm\n";
+	print  INP "dihedral_style charmm\n";
+	print  INP "improper_style harmonic\n";
+	print  INP "pair_style lj/charmm/coul/long 8.0 10.0\n";
+	print  INP "pair_modify	mix arithmetic\n";
+	#Specifiy 1-4 interactions
+	print  INP "kspace_style pppm 1.0e-4\n";
+	print  INP "special_bonds charmm\n";
+
+	print  INP "read_data out.lmp\n";
+	$i = 1;
+	foreach $_ (keys(%mass)) {
+		$j = 1;
+		foreach $b (keys(%mass)) {
+			$tmp = "$_-$b";
+			if (defined($sig14{$tmp}) && ($_ ne $b) && $j >= $i) {
+				$c = sqrt($eps{$_}*$eps{$b});
+				$d = 0.5*($sig{$_} +$sig{$b});
+				print  INP "pair_coeff\t$i\t$j\t$c\t$d\t$eps14{$tmp}\t$sig14{$tmp}\t\n";
+			}
+
+			$j++
+		}
+		$i++
+	}
+		
+		
+	print INP  "pair_modify tail yes\n";
+	
+	print  INP "min_style sd\n";
+	
+	
+	
+	print  INP "dump 2 all atom 2 full.dump\n";
+	
+	print  INP "#minimize 1.0e-4 1.0e-6 1000 1000\n";
+	
+	print INP "velocity all create 300.0 30446 mom yes dist gaussian\n";
+	
+	
+	print  INP "thermo 1\n";
+	
+	print  INP "timestep 0.001\n";
+	print  INP "fix 1 all npt iso 1.0 1.0 1.0 temp 300. 300. 0.1 tchain 5 pchain 5 mtk yes\n";
+	
+	
+	
+	print  INP "run 10000\n";
+	
+
+	close(INP);
+
+}
+
+
+
 
 sub conversion {
 	local $kj = 96.4853365;
@@ -346,12 +498,12 @@ sub conversion {
 	
 	#cth Kj/mol -> eV
 	foreach (keys(%cth)) {
-		$cth{$_} /= $kj;
+		$cth{$_} /= (2*$kj);
 	}
 	
 	#cub Kj/Mol /nm^2 -> eV/A^2
 	foreach (keys(%cub)) {
-		$cub{$_} /= ($kj/0.01);
+		$cub{$_} /= (2*$kj/0.01);
 	}
 	
 	#ub nm -> A
@@ -361,25 +513,53 @@ sub conversion {
 	
 	#sig Kj/mol -> eV
 	foreach (keys(%sig)) {
-		$sig{$_} /= $kj;
+		$sig{$_} *= 10 ;
 		$sig{$_} *=  2.0**(5/6);
+
 	}
 	
 	#eps nm -> A
 	foreach (keys(%eps)) {
-		$eps{$_} *= 10;
+		$eps{$_} /= $kj;
+		$eps{$_} /= 4;
+	}
+	
+	
+	#Impropers
+	foreach (keys(%imp_phi)) {
+		$imp_cp{$_} /= ($kj/0.01);
+		$imp_phi{$_} *= 10;
+	}
+	
+	
+	
+	
+	#sig Kj/mol -> eV
+	foreach (keys(%sig)) {
+		$sig14{$_} *= 10 ;
+		$sig14{$_} *=  2.0**(5/6);
+
+	}
+	
+	#eps nm -> A
+	foreach (keys(%eps)) {
+		$eps14{$_} /= $kj;
+		$eps14{$_} /= 4;
 	}
 	
 	# Positions nm -> A
 	for ($i =0; $i < $nAtoms; $i ++) {
-		$x[$i] *= 10;
-		$y[$i] *= 10;
-		$z[$i] *= 10;
+
+		
+		$x[$i] = ($x[$i])*10;
+		$y[$i] = ($y[$i])*10;
+		$z[$i] = ($z[$i])*10;
+		
 	}
 	
-	$box_x *= 10;
-	$box_y *= 10;
-	$box_z *= 10;
+	$box_x *= 5*10;
+	$box_y *= 5*10;
+	$box_z *= 5*10;
 
 }
 
@@ -401,6 +581,7 @@ parse_bonded();
 
 build_lut();
 conversion();
+suggested_inp();
 
 
 #Output stage
@@ -411,17 +592,19 @@ print "$nAtoms atoms\n";
 print "$nBonds bonds\n";
 print "$nAngles angles\n";
 print "$nDih dihedrals\n";
+print  "$nImp impropers\n";
 $i = scalar keys(%mass);
 print "$i atom types\n";
 print "$nDt dihedral types\n";
 print "$nAt angle types\n";
 print "$nBt bond types\n";
+print "$nIt improper types\n";
 
 
 print "\n";
-print "0 $box_x xlo xhi\n";
-print "0 $box_y ylo yhi\n";
-print "0 $box_z zlo zhi\n";
+print "-$box_x $box_x xlo xhi\n";
+print "-$box_y $box_y ylo yhi\n";
+print "-$box_z $box_z zlo zhi\n";
 
 print "\n";
 
@@ -434,30 +617,54 @@ foreach (keys(%mass)) {
 print "\nPair Coeffs\n\n";
 $i = 1;
 foreach $_ (keys(%mass)) {
-	print  "\t$i\t$eps{$_}\t$sig{$_}\n";
+	$tmp = "$_-$_";
+	print  "\t$i\t$eps{$_}\t$sig{$_}\t$eps14{$tmp}\t$sig14{$tmp}\n";
 	$i++
 }
 
-print "\n\nBond Coeffs\n\n";
-foreach $_ (keys(%bondtypes)) {
-	print "\t$bondtypes{$_}\t$kb{$_}\t$b0{$_}\n";
+print "\nBond Coeffs\n\n";
+for($i = 1; $i <= $nBt; $i++ ) {
+	foreach $_ (keys(%bondtypes)) {
+		if ($i == $bondtypes{$_}) {
+			print "\t$bondtypes{$_}\t$kb{$_}\t$b0{$_}\n";
+		}
+	}
 }
 
 print "\nAngle Coeffs\n\n";
-foreach $_ (keys(%angletypes)) {
-	print "\t$angletypes{$_}\t$th{$_}\t$cth{$_}\t$cub{$_}\t$ub{$_}\n";
+for($i = 1; $i <=$nAt; $i++) {
+	foreach $_ (keys(%angletypes)) {
+		if($i == $angletypes{$_}) {
+			print "\t$angletypes{$_}\t$th{$_}\t$cth{$_}\t$cub{$_}\t$ub{$_}\n";
+		}
+	}
 }
 
 print "\nDihedral Coeffs\n\n";
-foreach $_ (keys(%dihtypes)) {
-	print "\t$dihtypes{$_}\t$cp{$_}\t$multi{$_}\t$phi{$_}\t1.0\n";
+for ($i = 1; $i <= $nDt; $i++) {
+	foreach $_ (keys(%dihtypes)) {
+		if($i == $dihtypes{$_}) {
+			print "\t$dihtypes{$_}\t$cp{$_}\t$multi{$_}\t$phi{$_}\t1.0\n";
+		}
+	}
 }
 
+
+print "\nImproper Coeffs\n\n";
+
+for ($i =1; $i <= $nIt; $i++) {
+	foreach $_ (keys(%imptypes)) {
+		if($i == $imptypes{$_}) {
+			print "\t$imptypes{$_}\t$imp_cp{$_}\t$imp_phi{$_}\n";
+		}
+	}
+}
 
 print "\nAtoms\n\n";
 
 for($i =1; $i<=$nAtoms; $i++) {
 	print "\t$i\t1\t$typeconv{$atoms[$i-1]}\t$charge{$atoms[$i-1]}\t$x[$i-1]\t$y[$i-1]\t$z[$i-1]# $atoms[$i-1]\n";
+	
 }
 print "\nBonds\n\n";
 $k=1;
@@ -465,7 +672,7 @@ $k=1;
 foreach $_ (@bonds) {
 	($i, $j) = split(/-/, $_);
 	$tmp = (defined($bondtypes{to_types($_)}))? $bondtypes{to_types($_)}: $bondtypes{to_types("$j-$i")};
-	print "\t$k\t$tmp\t$i\t$j\n";
+	print "\t$k\t$tmp\t$i\t$j # $atoms[$i-1]-$atoms[$j-1]\n";
 	$k++;
 }
 
@@ -491,5 +698,17 @@ foreach $_ (@dihedrals) {
 	$h++;
 }
 
+
+print "\nImpropers\n\n";
+$h = 1;
+foreach $_ (@impropers) {
+	($i, $j, $k,$l) = split(/-/,$_);
+	$tmp = (defined($imptypes{to_types($_)}))? $imptypes{to_types($_)}: $imptypes{to_types("$l-$k-$j-$i")};
+	if ($tmp eq "") {
+		$tmp = (defined($imptypes{to_types("$i-X-X-$l")}))? $imptypes{to_types("$i-X-X-$l")}: $imptypes{to_types("$l-X-X-$i")};
+	}
+	print "\t$h\t$tmp\t$i\t$j\t$k\t$l\n";
+	$h++;
+}
 
 
