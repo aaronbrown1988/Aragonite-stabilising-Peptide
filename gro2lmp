@@ -635,7 +635,7 @@ print "\nAngle Coeffs\n\n";
 for($i = 1; $i <=$nAt; $i++) {
 	foreach $_ (keys(%angletypes)) {
 		if($i == $angletypes{$_}) {
-			print "\t$angletypes{$_}\t$th{$_}\t$cth{$_}\t$cub{$_}\t$ub{$_}\n";
+			print "\t$angletypes{$_}\t$cth{$_}\t$th{$_}\t$cub{$_}\t$ub{$_}\n";
 		}
 	}
 }
