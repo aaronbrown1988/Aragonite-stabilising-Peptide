@@ -105,6 +105,9 @@ sub build_lut{
 
 
 
+
+
+
 sub parse_gro  {
 	local $i, $j,$tmp;
 	local $line;
@@ -459,14 +462,14 @@ sub suggested_inp {
 	
 	
 	
-	print  INP "dump 2 all atom 2 full.dump\n";
+	print  INP "dump 2 all atom 500 full.dump\n";
 	
 	print  INP "#minimize 1.0e-4 1.0e-6 1000 1000\n";
 	
 	print INP "velocity all create 300.0 30446 mom yes dist gaussian\n";
 	
 	
-	print  INP "thermo 1\n";
+	print  INP "thermo 500\n";
 	
 	print  INP "timestep 0.001\n";
 	print  INP "fix 1 all npt iso 1.0 1.0 1.0 temp 300. 300. 0.1 tchain 5 pchain 5 mtk yes\n";
@@ -490,15 +493,18 @@ sub conversion {
 	#b0 nm -> A
 	foreach (keys(%b0)) {
 		$b0{$_} *= 10;
+		
 	}
 	#kb Kj/mol nm^-2 ev/A^2
 	foreach (keys(%kb)) {
 		$kb{$_} = $kb{$_}/($kj/0.01);
+		$kb{$_} /= 2;
 	}
 	
 	#cth Kj/mol -> eV
 	foreach (keys(%cth)) {
-		$cth{$_} /= (2*$kj);
+		$cth{$_} /= $kj;
+		$cth{$_} /= 2;
 	}
 	
 	#cub Kj/Mol /nm^2 -> eV/A^2
@@ -511,14 +517,14 @@ sub conversion {
 		$ub{$_} *= 10;
 	}
 	
-	#sig Kj/mol -> eV
+	#sig nm -> A
 	foreach (keys(%sig)) {
 		$sig{$_} *= 10 ;
 		$sig{$_} *=  2.0**(5/6);
 
 	}
 	
-	#eps nm -> A
+	#eps Kj/mol -> eV
 	foreach (keys(%eps)) {
 		$eps{$_} /= $kj;
 		$eps{$_} /= 4;
@@ -527,24 +533,25 @@ sub conversion {
 	
 	#Impropers
 	foreach (keys(%imp_phi)) {
-		$imp_cp{$_} /= ($kj/0.01);
+		$imp_cp{$_} /= $kj;
+		$imp_cp{$_} /= 2;
 		$imp_phi{$_} *= 10;
 	}
 	
 	
 	
 	
-	#sig Kj/mol -> eV
+	#sig nm -> A
 	foreach (keys(%sig)) {
 		$sig14{$_} *= 10 ;
 		$sig14{$_} *=  2.0**(5/6);
 
 	}
 	
-	#eps nm -> A
+	#eps Kj/mol -> eV
 	foreach (keys(%eps)) {
 		$eps14{$_} /= $kj;
-		$eps14{$_} /= 4;
+		#$eps14{$_} /= 4;
 	}
 	
 	# Positions nm -> A
