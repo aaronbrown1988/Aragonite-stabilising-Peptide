@@ -101,13 +101,6 @@ sub build_lut{
 }
 
 
-
-
-
-
-
-
-
 sub parse_gro  {
 	local $i, $j,$tmp;
 	local $line;

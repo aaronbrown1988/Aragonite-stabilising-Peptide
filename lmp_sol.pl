@@ -14,9 +14,9 @@ my @x, @y, @z;
 
 
 
-open(GMX, "out.gro");
-open(LMPDATA, "chain.lmp");
-open(SOLV, ">chain.sol.lmp");
+open(GMX, $ARGV[0]);
+open(LMPDATA, $ARGV[1});
+open(SOLV, ">$ARGV[2]");
 
 
 #Advance the file on 2 lines
