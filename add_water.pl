@@ -10,13 +10,36 @@ my $spc216= "/usr/share/gromacs/tutor/water/spc216.pdb";
 my $wbx_l=18.6206; # Size of water box in A;
 my $gap = 5; # Size of gap around solute;
 
+
+#Water Parameters - SPC/FW
+$kc2ev = 0.04336;
+
+$kb = 1059.162 * $kc2ev;
+$b0 = 1.0123;
+
+$cth = 75.9 * $kc2ev;
+$th0 = 113.24;
+$ub = 0;
+$cub = 0.0;
+
+$oeps = 0.1554253 * $kc2ev;
+$heps = 0;
+$osig = 3.1506;
+$hsig = 0;
+
+$owc = -0.82;
+$hwc = 0.41;
+$owm = 16;
+$hwm = 1;
+
+
 #
 # Program below
 #
 
 my $owt, $hwt; # Water oxygen and hydrogen types
 my $wa, $wb; # Water angle type water bond type
-my $last_at, $last_b, $last_an, $last_a, $last_angt, $last_bt; # last 
+my $last_at, $last_b, $last_an, $last_a, $last_angt, $last_bt, $last_m; # last 
 my $xlo, $xhi, $ylo, $yhi, $zlo, $zhi; 	# solute extreems 
 my @water_origins; 			# Where we're going to start our 216 waters from
 my @x,@y,@z; 				# positions of the atoms
@@ -24,6 +47,10 @@ my $i,$j,$k;
 
 my $owm = 16;
 my $hwm = 1;
+
+
+
+
 
 open (INP, $ARGV[0]) || die "couldn't open $ARGV[0]\n";
 
@@ -95,6 +122,7 @@ $i = ceil(($xhi - $xlo + 2*$gap)/$wbx_l);
 $j = ceil(($yhi - $ylo + 2*$gap)/$wbx_l);
 $k = ceil(($zhi - $zlo + 2*$gap)/$wbx_l);
 
+print "Tesselating with $i x $j x$k boxes\n";
 
 if ($owt != undef) {
 	to_section(section=> 'Bond Coeffs');
@@ -146,9 +174,9 @@ while ($line = readline(INP)) {
 
 if ($owt == 0) {
 	$owt = $last_at+1;
-	print OUT "\t$last_at\t$owm\n";
+	print OUT "\t$owt\t$owm\n";
 	$hwt = $last_at+2;
-	print OUT "\t$last_at\t$hwm\n";
+	print OUT "\t$hwt\t$hwm\n";
 	$added = 1;
 }
 print OUT "$line";
@@ -163,8 +191,8 @@ if ($added == 1) {
 
 	to_section(section=>'Pair Coeffs', output=>1);
 	fwd_section(output => 1);
-	print OUT "\t$owt\t$osig\t$oeps #OW\n";
-	print OUT "\t$hwt\t$hsig\t$heps #HW\n";
+	print OUT "\t$owt\t$oeps\t$osig #OW\n";
+	print OUT "\t$hwt\t$heps\t$hsig #HW\n";
 	print OUT "\n";
 
 	to_section(section=>'Bond Coeffs', output=>1);
@@ -205,6 +233,9 @@ my $a = $last_a;
 for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 	for ($tmpy = 0; $tmpy < $j; $tmpy++) {
 		for ($tmpz =0; $tmpz < $k; $tmpz ++) {
+			#$offset[0] = ($xlo-$gap-0.5*$wbx_l)+$tmpx*$wbx_l;
+			#$offset[1] = ($ylo-$gap-0.5*$wbx_l)+$tmpy*$wbx_l;
+			#$offset[2] = ($zlo-$gap-0.5*$wbx_l)+$tmpz*$wbx_l;
 			$offset[0] = ($xlo-$gap)+$tmpx*$wbx_l;
 			$offset[1] = ($ylo-$gap)+$tmpy*$wbx_l;
 			$offset[2] = ($zlo-$gap)+$tmpz*$wbx_l;
@@ -212,14 +243,17 @@ for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 			foreach ($water->atoms) {
 				$a++;
 				@coords = $_->coords->array;
-				$coords[0] += $offset[0];
-				$coords[1] += $offset[1];
-				$coords[2] += $offset[2];
+				$coords[0] -= $offset[0];
+				$coords[1] -= $offset[1];
+				$coords[2] -= $offset[2];
+				
+				if (check($_)) {
 				if ($_->symbol =~ /.*O.*/) {
 					$last_m++;
-					print OUT "\t$a\tMOL\t$hwt\t$hwc\t$coords[0]\t$coords[1]\t$coords[2]\n";
+					print OUT "\t$a\t$last_m\t$owt\t$owc\t$coords[0]\t$coords[1]\t$coords[2]\n";
 				} else {
-					print OUT "\t$a\tMOL\t$owt\t$owc\t$coords[0]\t$coords[1]\t$coords[2]\n";
+					print OUT "\t$a\t$last_m\t$hwt\t$hwc\t$coords[0]\t$coords[1]\t$coords[2]\n";
+				}
 				}
 			}
 		
@@ -243,15 +277,18 @@ while ($line = readline(INP)) {
 		print OUT "$line";
 	}
 }
-$curr = $last_a;
+$curr = $last_a+1;
 for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 	for ($tmpy = 0; $tmpy < $j; $tmpy++) {
 		for ($tmpz =0; $tmpz < $k; $tmpz ++) {
 			for ($cur = 0; $cur < 216*3; $cur+= 3) {
 				$last_b++;
-				$curr++;
 				$curh = $curr +1;
 				print OUT "\t$last_b\t$last_bt\t$curr\t$curh\n";
+				$curh = $curh +1;
+				$last_b++;
+				print OUT "\t$last_b\t$last_bt\t$curr\t$curh\n";
+				$curr+=3;
 			}
 		}
 	}
@@ -274,19 +311,34 @@ while ($line = readline(INP)) {
 		print OUT "$line";
 	}
 }
-$curr = $last_a;
+$curr = $last_a+1;
 for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 	for ($tmpy = 0; $tmpy < $j; $tmpy++) {
 		for ($tmpz =0; $tmpz < $k; $tmpz ++) {
 			for ($cur = 0; $cur < 216*3; $cur+= 3) {
 				$last_ang++;
-				$curr++;
 				$curh = $curr +1;
 				$curh2 = $curh+1;
 				print OUT "\t$last_ang\t$last_angt\t$curh\t$curr\t$curh2\n";
+				$curr += 3;
 			}
 		}
 	}
+}
+
+while (!eof(INP)) {
+	$line = readline(INP);
+	print OUT "$line";
+}
+
+print "$curh2 atoms\n";
+print "$last_ang angles\n";
+print "$last_b bonds\n";
+
+if ($added == 1) {
+	print "$hwt atom types\n";
+	print "$last_bt  bond types\n";
+	print "$last_angt angle types\n";
 }
 
 
@@ -320,3 +372,5 @@ sub fwd_section {
 		}
 	}
 }
+
+

@@ -153,7 +153,7 @@ sub parse_atoms {
 		
 		# Only things were really interested in is charge and mass;
 		$mass{$cur_type} = $cur_mass;
-		$charge{$cur_type} = abs($cur_charge);
+		$charge{$cur_type} = $cur_charge;
 	}
 	close(TOP);
 }
@@ -555,6 +555,9 @@ sub conversion {
 		$y[$i] = ($y[$i])*10;
 		$z[$i] = ($z[$i])*10;
 		
+	}
+	foreach (keys(%cp)) {
+		$cp{$_} /= $kj;
 	}
 	
 	$box_x *= 5*10;
