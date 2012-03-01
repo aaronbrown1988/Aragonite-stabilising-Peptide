@@ -247,13 +247,11 @@ for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 				$coords[1] -= $offset[1];
 				$coords[2] -= $offset[2];
 				
-				if (check($_)) {
 				if ($_->symbol =~ /.*O.*/) {
 					$last_m++;
 					print OUT "\t$a\t$last_m\t$owt\t$owc\t$coords[0]\t$coords[1]\t$coords[2]\n";
 				} else {
 					print OUT "\t$a\t$last_m\t$hwt\t$hwc\t$coords[0]\t$coords[1]\t$coords[2]\n";
-				}
 				}
 			}
 		
