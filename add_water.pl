@@ -8,7 +8,7 @@ use Chemistry::File::PDB;
 # Configuration
 my $spc216= "/usr/share/gromacs/tutor/water/spc216.pdb";
 my $wbx_l=18.6206; # Size of water box in A;
-my $gap = 5; # Size of gap around solute;
+my $gap = 8; # Size of gap around solute;
 
 
 #Water Parameters - SPC/FW
@@ -53,6 +53,8 @@ my $hwm = 1;
 
 
 open (INP, $ARGV[0]) || die "couldn't open $ARGV[0]\n";
+
+
 
 # Find water types "OW HW"
 # > Move to masses
@@ -117,6 +119,18 @@ while ($line = readline(INP)) {
 }
 
 # Calculate how many water boxes we need
+
+if($ARGV[1]) {
+	
+	$xlo = $ARGV[1];
+	$xhi = $ARGV[2];
+	$ylo = $ARGV[3];
+	$yhi = $ARGV[4];
+	$zlo = $ARGV[5];
+	$zhi = $ARGV[6];
+
+	$gap = 0;
+}
 
 $i = ceil(($xhi - $xlo + 2*$gap)/$wbx_l);
 $j = ceil(($yhi - $ylo + 2*$gap)/$wbx_l);
@@ -236,17 +250,24 @@ for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 			#$offset[0] = ($xlo-$gap-0.5*$wbx_l)+$tmpx*$wbx_l;
 			#$offset[1] = ($ylo-$gap-0.5*$wbx_l)+$tmpy*$wbx_l;
 			#$offset[2] = ($zlo-$gap-0.5*$wbx_l)+$tmpz*$wbx_l;
-			$offset[0] = ($xlo-$gap)+$tmpx*$wbx_l;
-			$offset[1] = ($ylo-$gap)+$tmpy*$wbx_l;
-			$offset[2] = ($zlo-$gap)+$tmpz*$wbx_l;
+			$offset[0] = ($xlo-$gap+0.5*$wbx_l)+$tmpx*$wbx_l;
+			$offset[1] = ($ylo-$gap+0.5*$wbx_l)+$tmpy*$wbx_l;
+			$offset[2] = ($zlo-$gap+0.5*$wbx_l)+$tmpz*$wbx_l;
 			
 			foreach ($water->atoms) {
 				$a++;
 				@coords = $_->coords->array;
-				$coords[0] -= $offset[0];
-				$coords[1] -= $offset[1];
-				$coords[2] -= $offset[2];
+				$coords[0] += $offset[0];
+				$coords[1] += $offset[1];
+				$coords[2] += $offset[2];
 				
+				if (check(@coords)!= 0) {
+					#Give it a little nudge :P
+					$coords[0] += 0.1;
+					$coords[1] += 0.1;
+					$coords[2] += 0.1;
+					
+				}
 				if ($_->symbol =~ /.*O.*/) {
 					$last_m++;
 					print OUT "\t$a\t$last_m\t$owt\t$owc\t$coords[0]\t$coords[1]\t$coords[2]\n";
@@ -280,6 +301,12 @@ for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 	for ($tmpy = 0; $tmpy < $j; $tmpy++) {
 		for ($tmpz =0; $tmpz < $k; $tmpz ++) {
 			for ($cur = 0; $cur < 216*3; $cur+= 3) {
+				#if (($curh+1) > $a) {
+					#$tmpx = $i;
+					#$tmpy = $j;
+					#$tmpz = $k;
+					#last;
+				#}
 				$last_b++;
 				$curh = $curr +1;
 				print OUT "\t$last_b\t$last_bt\t$curr\t$curh\n";
@@ -287,6 +314,7 @@ for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 				$last_b++;
 				print OUT "\t$last_b\t$last_bt\t$curr\t$curh\n";
 				$curr+=3;
+				
 			}
 		}
 	}
@@ -317,6 +345,12 @@ for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 				$last_ang++;
 				$curh = $curr +1;
 				$curh2 = $curh+1;
+				#if ($curh2 > $a) {
+					#$tmpx = $i;
+					#$tmpy = $j;
+					#$tmpz = $k;
+					#last;
+				#}
 				print OUT "\t$last_ang\t$last_angt\t$curh\t$curr\t$curh2\n";
 				$curr += 3;
 			}
@@ -329,7 +363,7 @@ while (!eof(INP)) {
 	print OUT "$line";
 }
 
-print "$curh2 atoms\n";
+print "$a atoms\n";
 print "$last_ang angles\n";
 print "$last_b bonds\n";
 
@@ -371,4 +405,25 @@ sub fwd_section {
 	}
 }
 
+
+sub check {
+	my $i;
+	my $dist;
+	@coords = @_;
+	$close = 0;
+	for($i = 0; $i < $last_a; $i++) {
+		$dist = 0;
+		$dist = ($x[$i] - $coords[0])**2;
+		$dist += ($y[$i] - $coords[1])**2;
+		$dist += ($z[$i] - $coords[2])**2;
+		$dist = sqrt($dist);
+		#print "$dist \n";
+		
+		if ($dist <= 0.2) {
+			$close = 1;
+		}
+	}
+	return ($close);
+		
+}
 

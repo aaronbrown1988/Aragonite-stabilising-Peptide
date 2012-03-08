@@ -1,7 +1,12 @@
 #!/usr/bin/perl
 
-open(FH, "chain.sol.lmp");
+open(FH, $ARGV[0]);
+
 while ($line = readline(FH)) {
+	if ($line =~ /.atoms.*/) {
+		$atoms = $line;
+		$atoms =~ s/\s.*//;
+	}
 	if ($line  =~ /.*Atoms.*/) {
 		last;
 }}
@@ -15,7 +20,8 @@ while ($line = readline(FH)) {
 	push(@x, $e);
 	push(@y, $f);
 	push(@z, $g);
-	print "$e, $f,$g\n"
+	
+	#print "$e, $f,$g\n"
 }
 
 
@@ -26,7 +32,7 @@ $zmin = 9999999;
 $ymax = -$ymin;
 $zmax = -$zmin;
 
-for($i=0; $i< 3540; $i++) {
+for($i=0; $i< $atoms; $i++) {
 	$xmin = ($xmin > $x[$i])? $x[$i] : $xmin;
 	$xmax = ($xmax < $x[$i])? $x[$i] : $xmax;
 	$ymin = ($ymin > $y[$i])? $y[$i] : $ymin;
@@ -38,8 +44,8 @@ $xl = 0.5*($xmax - $xmin);
 $yl = 0.5*($ymax - $ymin);
 $zl = 0.5*($zmax - $zmin);
 
-for($i=0; $i< 3540; $i++) {
-	for($j=0; $j<3540; $j++) {
+for($i=0; $i< $atoms; $i++) {
+	for($j=$i; $j<$atoms; $j++) {
 		$xdist =($x[$i] - $x[$j]);
 		$ydist = ($y[$i] - $y[$j]);
 		$zdist = ($z[$i] - $z[$j]);	
