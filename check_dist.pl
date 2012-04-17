@@ -32,6 +32,7 @@ $zmin = 9999999;
 $ymax = -$ymin;
 $zmax = -$zmin;
 
+
 for($i=0; $i< $atoms; $i++) {
 	$xmin = ($xmin > $x[$i])? $x[$i] : $xmin;
 	$xmax = ($xmax < $x[$i])? $x[$i] : $xmax;
@@ -44,8 +45,15 @@ $xl = 0.5*($xmax - $xmin);
 $yl = 0.5*($ymax - $ymin);
 $zl = 0.5*($zmax - $zmin);
 
+
+print "Slab bounds:\n";
+print  "$xmin -> $xmax\n";
+print  "$ymin -> $ymax\n";
+print  "$zmin -> $zmax\n";
+
+
 for($i=0; $i< $atoms; $i++) {
-	for($j=$i; $j<$atoms; $j++) {
+	for($j=$i+1; $j<$atoms; $j++) {
 		$xdist =($x[$i] - $x[$j]);
 		$ydist = ($y[$i] - $y[$j]);
 		$zdist = ($z[$i] - $z[$j]);	

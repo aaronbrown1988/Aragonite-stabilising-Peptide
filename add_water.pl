@@ -247,19 +247,19 @@ my $a = $last_a;
 for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 	for ($tmpy = 0; $tmpy < $j; $tmpy++) {
 		for ($tmpz =0; $tmpz < $k; $tmpz ++) {
-			#$offset[0] = ($xlo-$gap-0.5*$wbx_l)+$tmpx*$wbx_l;
-			#$offset[1] = ($ylo-$gap-0.5*$wbx_l)+$tmpy*$wbx_l;
-			#$offset[2] = ($zlo-$gap-0.5*$wbx_l)+$tmpz*$wbx_l;
-			$offset[0] = ($xlo-$gap+0.5*$wbx_l)+$tmpx*$wbx_l;
-			$offset[1] = ($ylo-$gap+0.5*$wbx_l)+$tmpy*$wbx_l;
-			$offset[2] = ($zlo-$gap+0.5*$wbx_l)+$tmpz*$wbx_l;
+			$offset[0] = ($xlo)+$tmpx*$wbx_l;
+			$offset[1] = ($ylo)+$tmpy*$wbx_l;
+			$offset[2] = ($zlo)+$tmpz*$wbx_l;
+			#$offset[0] = ($xlo-$gap+0.5*$wbx_l)+$tmpx*$wbx_l;
+			#$offset[1] = ($ylo-$gap+0.5*$wbx_l)+$tmpy*$wbx_l;
+			#$offset[2] = ($zlo-$gap+0.5*$wbx_l)+$tmpz*$wbx_l;
 			
 			foreach ($water->atoms) {
 				$a++;
 				@coords = $_->coords->array;
-				$coords[0] += $offset[0];
-				$coords[1] += $offset[1];
-				$coords[2] += $offset[2];
+				$coords[0] -= $offset[0];
+				$coords[1] -= $offset[1];
+				$coords[2] -= $offset[2];
 				
 				if (check(@coords)!= 0) {
 					#Give it a little nudge :P

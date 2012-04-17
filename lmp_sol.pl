@@ -15,7 +15,7 @@ my @x, @y, @z;
 
 
 open(GMX, $ARGV[0]);
-open(LMPDATA, $ARGV[1});
+open(LMPDATA, $ARGV[1]);
 open(SOLV, ">$ARGV[2]");
 
 
@@ -122,7 +122,7 @@ for ($i=0; $i<$sol; $i++) {
 	$x[$i] = $x[$i] * 0.9 +$xmin;
 	$y[$i] = $y[$i] * 0.9 +$ymin;
 	
-	$z[$i] += $zmax+0.2;
+	$z[$i] += $zmax+0.5;
 	
 	
 	#if (inslab($x[$i], $y[$i],$z[$i]) == 1) {
