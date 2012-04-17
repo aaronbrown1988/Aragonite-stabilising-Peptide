@@ -136,6 +136,10 @@ $i = ceil(($xhi - $xlo + 2*$gap)/$wbx_l);
 $j = ceil(($yhi - $ylo + 2*$gap)/$wbx_l);
 $k = ceil(($zhi - $zlo + 2*$gap)/$wbx_l);
 
+
+$i = ($i < 2)? 2: $i;
+$j = ($j < 2)? 2: $j;
+$k = ($k < 2)? 2: $k;
 print "Tesselating with $i x $j x$k boxes\n";
 
 if ($owt != undef) {
@@ -188,9 +192,9 @@ while ($line = readline(INP)) {
 
 if ($owt == 0) {
 	$owt = $last_at+1;
-	print OUT "\t$owt\t$owm\n";
+	print OUT "\t$owt\t$owm #OW\n";
 	$hwt = $last_at+2;
-	print OUT "\t$hwt\t$hwm\n";
+	print OUT "\t$hwt\t$hwm #HW\n";
 	$added = 1;
 }
 print OUT "$line";

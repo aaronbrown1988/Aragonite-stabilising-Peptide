@@ -529,7 +529,7 @@ sub conversion {
 	foreach (keys(%imp_phi)) {
 		$imp_cp{$_} /= $kj;
 		$imp_cp{$_} /= 2;
-		$imp_phi{$_} *= 10;
+#		$imp_phi{$_} *= 10;
 	}
 	
 	
@@ -667,7 +667,7 @@ for ($i =1; $i <= $nIt; $i++) {
 print "\nAtoms\n\n";
 
 for($i =1; $i<=$nAtoms; $i++) {
-	print "\t$i\t1\t$typeconv{$atoms[$i-1]}\t$charge{$atoms[$i-1]}\t$x[$i-1]\t$y[$i-1]\t$z[$i-1]# $atoms[$i-1]\n";
+	print "\t$i\t1\t$typeconv{$atoms[$i-1]}\t$charge{$atoms[$i-1]}\t$x[$i-1]\t$y[$i-1]\t$z[$i-1] # $atoms[$i-1]\n";
 	
 }
 print "\nBonds\n\n";
