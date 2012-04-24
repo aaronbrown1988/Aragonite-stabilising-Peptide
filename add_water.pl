@@ -261,9 +261,9 @@ for ($tmpx =0; $tmpx < $i; $tmpx ++) {
 			foreach ($water->atoms) {
 				$a++;
 				@coords = $_->coords->array;
-				$coords[0] -= $offset[0];
-				$coords[1] -= $offset[1];
-				$coords[2] -= $offset[2];
+				$coords[0] += $offset[0];
+				$coords[1] += $offset[1];
+				$coords[2] += $offset[2];
 				
 				if (check(@coords)!= 0) {
 					#Give it a little nudge :P

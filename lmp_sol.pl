@@ -82,8 +82,9 @@ $ymax = -$ymin;
 $zmax = -$zmin;
 
 while ($line = readline(LMPDATA)) {
-		print SOLV "$line";
 		if (length($line) < 3 ){ last;}
+		$line =~ s/^\t//;
+		print SOLV "\t$line";
 		($curratom, $currtag, $c,$d,$e,$f,$g) = split(/\s+/, $line);
 	#	print "$curratom, $currtag, $c, $d, $e, $f, $g\n";
 		$xmin = ($xmin > $e)? $e : $xmin;
@@ -119,10 +120,10 @@ for ($i=0; $i<$sol; $i++) {
 #	$x[$i] += $xmin;
 #	$y[$i] += $ymin;
 
-	$x[$i] = $x[$i] * 0.9 +$xmin;
-	$y[$i] = $y[$i] * 0.9 +$ymin;
+	$x[$i] = $x[$i] * 1.0 +$xmin;
+	$y[$i] = $y[$i] * 1.0 +$ymin;
 	
-	$z[$i] += $zmax+0.5;
+	$z[$i] += $zmax+4.0;
 	
 	
 	#if (inslab($x[$i], $y[$i],$z[$i]) == 1) {
@@ -164,8 +165,9 @@ print SOLV "$line";
 
 $currbond = 0;
 while ($line = readline(LMPDATA)) {
-		print SOLV "$line";
 		if (length($line) < 3 ){ last;}
+		$line =~ s/^\t//;
+		print SOLV "\t$line";
 		($currbond, $rubbish2) = split(/\s+/, $line);
 }
 	
@@ -184,10 +186,25 @@ for ($i =0; $i<$sol; $i+=3) {
 }
 
 
+#Move to Angles section
+while ($line = readline(LMPDATA)) {
+	print SOLV "$line";
+	if($line =~ /.*Angles.*/) {
+		last;
+	}
+}
 
-print SOLV "Angles\n\n";
-$curratom = $last_atom;
+$line = readline(LMPDATA);
+print SOLV "$line";
+
 $currangle = 0;
+while ($line = readline(LMPDATA)) {
+		if (length($line) < 3 ){ last;}
+		$line =~ s/^\t//;
+		print SOLV "\t$line";
+		($currangle, $rubbish2) = split(/\s+/, $line);
+}
+$curratom = $last_atom;
 for ($i = 0 ; $i < $sol; $i+= 3) {
 	$currangle ++;
 	$curratom = $last_atom+$i;
@@ -210,4 +227,6 @@ sub inslab()
 	return ($test)
 }
 	
-	
+while($line = readline(LMPDATA)) {
+	print SOLV "$line";
+}

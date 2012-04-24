@@ -456,9 +456,9 @@ sub suggested_inp {
 	
 	
 	print  INP "dump 2 all dcd 500 full.dcd\n";
-	print  INP "dump_modify 2 unwrap yes\n";
+	print  INP "dump_modify 2 unwrap yes first yes\n";
 	
-	print  INP "minimize 1.0e-4 1.0e-6 1000 1000\n";
+	print  INP "minimize 1.0e-4 1.0e-6 10000 10000\n";
 	
 	print INP "velocity all create 300.0 30446 mom yes dist gaussian\n";
 	
@@ -466,7 +466,12 @@ sub suggested_inp {
 	print  INP "thermo 500\n";
 	
 	print  INP "timestep 0.001\n";
-	print  INP "fix 1 all npt iso 1.0 1.0 1.0 temp 300. 300. 0.1 tchain 5 pchain 5 mtk yes\n";
+	print INP "fix 1 all nve\n";
+	print INP "fix 2 all langevin 300 300 100.0 48279 scale 3 1.5\n";
+	print INP "run 10000\n";
+	print INP "unfix 1\n";
+	print INP "unfix 2\n";
+	print  INP "fix 3 all npt iso 1.0 1.0 1.0 temp 300. 300. 0.1 tchain 5 pchain 5 mtk yes\n";
 	
 	
 	
