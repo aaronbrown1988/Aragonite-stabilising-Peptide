@@ -277,7 +277,7 @@ sub parse_nonb {
 	while($line = readline(FF)) {
 		if (length($line) < 3 ){ last;}
 		if ($line =~ /^[^#; ].*/) {
-			($cur_type, $cur_at, $cur_mas, $cur_charge, $cur_p, $cur_sigma, $cur_eps, $throw) = split(/\t/, $line);
+			($cur_type, $cur_at, $cur_mas, $cur_charge, $cur_p, $cur_sigma, $cur_eps, $throw) = split(/\s+/, $line);
 			chomp($cur_eps);
 			$sig{$cur_type} = $cur_sigma;
 			$cur_eps =~ s/ .*//;
@@ -312,7 +312,9 @@ sub parse_bonded {
 	$nBt = 1;
 	while ($line = readline(FF)) {
 		if(length($line) < 3){last;}
-		if($line =~ /^[^#; ].*/) {
+		if($line =~ /^[^#;].*/) {
+			$line =~ s/^\s+//;
+			$line =~ s/;.*//;
 			($atype, $btype, $cur_type, $curr_b0, $curr_kb) = split(/\s+/, $line);
 			if(!defined($bondtype{"$atype-$btype"})) {
 				$bondtype{"$atype-$btype"} = $curr_bond;
@@ -331,7 +333,9 @@ sub parse_bonded {
 	$nAt = 1;
 		while($line = readline(FF)) {
 		if(length($line) < 3){last;}
-		if($line =~ /^[^#; ].*/) {
+		if($line =~ /^[^#;].*/) {
+			$line =~ s/^\s+//;
+			$line =~ s/;.*//;
 			($atype, $btype, $ctype, $cur_type, $cur_th0, $cur_cth, $cur_ub, $cur_cub) = split(/\s+/, $line);
 			$th{"$atype-$btype-$ctype"} = $cur_th0;
 			$cth{"$atype-$btype-$ctype"} = $cur_cth;
@@ -349,9 +353,11 @@ sub parse_bonded {
 	$nIt = 1;
 	while($line = readline(FF)) {
 		if(length($line) < 3){last;}
-		if($line =~ /^[^#; ].*/) {
+		if($line =~ /^[^#;].*/) {
+			$line =~ s/^\s+//;
+			$line =~ s/;.*//;
 			($atype, $btype, $ctype, $dtype, $cur_type, $cur_phi, $cur_cp, $cur_mult) = split(/\s+/,$line);
-			if ($cur_type == 9) {
+			if ($cur_type == 9 || $cur_type == 4) {
 				$tmp = "$atype-$btype-$ctype-$dtype";
 				$cur_phi = floor($cur_phi);
 				$cur_phi =~ s/\..*//;
@@ -377,7 +383,9 @@ sub parse_bonded {
 	
 	while($line = readline(FF)) {
 		if(length($line) < 3){last;}
-		if($line =~ /^[^#; ].*/) {
+		if($line =~ /^[^#;].*/) {
+			$line =~ s/^\s+//;
+			$line =~ s/;.*//;
 			($atype, $btype, $ctype, $dtype, $cur_type, $cur_phi, $cur_cp) = split(/\s+/,$line);
 			if ($cur_type == 2) {
 				$tmp = "$atype-$btype-$ctype-$dtype";
@@ -386,6 +394,14 @@ sub parse_bonded {
 				
 				$nIt++;
 				
+			} elsif ($cur_type == 9 || $cur_type == 4) {
+				$tmp = "$atype-$btype-$ctype-$dtype";
+				$cur_phi = floor($cur_phi);
+				$cur_phi =~ s/\..*//;
+				$phi{$tmp} = $cur_phi;
+				$cp{$tmp} =  $cur_cp;
+				$multi{$tmp} = $cur_mult;
+				$nDt++;
 			}
 		}
 	}
@@ -653,7 +669,8 @@ print "\nDihedral Coeffs\n\n";
 for ($i = 1; $i <= $nDt; $i++) {
 	foreach $_ (keys(%dihtypes)) {
 		if($i == $dihtypes{$_}) {
-			print "\t$dihtypes{$_}\t$cp{$_}\t$multi{$_}\t$phi{$_}\t1.0\n";
+#			print "\t$dihtypes{$_}\t$cp{$_}\t$multi{$_}\t$phi{$_}\t1.0\n";
+			print "\t$dihtypes{$_}\t$cp{$_}\t$multi{$_}\t$phi{$_}\t0.0\n";
 		}
 	}
 }
