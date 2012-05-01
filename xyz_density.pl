@@ -8,21 +8,24 @@ use Fcntl qw/:seek/;
 
 
 #Configuration
-$wind_size = 3;
-$stride = 1;
-$zlo = -15;
-$zhi = 56;
+$wind_size = 1;
+$stride = 0.2;
+$zlo = 0;
+$zhi = 62;
 #$act = 9.97e-25; # g/(Angstrom^3)
 $act = 9.97e-2; # reduced power
 
 
-open(DATA, "chain.xyz");
+open(DATA, $ARGV[0]);
 
 #Find the last frame
 $i=0;
 $last=0;
 while($line = readline(DATA)) {
-	$last = ($line =~ /Atoms/)? $i: $last;
+	$last = ($line =~ /^3690/)? $i: $last;
+	if ($line =~ /^3690/) {
+		push(@starts, $i);
+	}
 	$i++;
 }
 
@@ -43,7 +46,8 @@ $ymin = $xmin;
 #Save in the position of the oxygen atoms and use that to calculate the density
 while($line = readline(DATA)) {
 	chomp($line);
-	($type, $i, $j, $k) = split(/ /, $line);
+	$line =~ s/^\s+//;
+	($type, $i, $j, $k) = split(/\s+/, $line);
 	
 	if($type >5) {
 		last;
