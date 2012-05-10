@@ -2,11 +2,11 @@
 
 
 for i in {0..23}; do
-    	cp -r ./charmm27.ff $i/
+    	cp -r ./amber03.ff $i/
 	cd $i
 	cp ../snap_$i.gro ./
 	cp ../test.mdp ./
-	echo -e "0\n3\n" | pdb2gmx -ff charmm27 -f snap_$i.gro -o snap_pre_box_$i.gro -p snap.top -water tip3p -ignh -ter  || exit
+	echo -e "0\n3\n" | pdb2gmx -ff amber03 -f snap_$i.gro -o snap_pre_box_$i.gro -p snap.top -water tip3p -ignh -ter  || exit
 	cd ..
 done
 
@@ -28,8 +28,8 @@ for i in {0..23}; do
 	~/utils/rest-setup snap.top $i 24 300 500
 
 	mv snap.top.new snap.top
-	mv charmm27.ff/ffbonded.itp.new charmm27.ff/ffbonded.itp
-	mv charmm27.ff/ffnonbonded.itp.new charmm27.ff/ffnonbonded.itp
+	mv amber03.ff/ffbonded.itp.new amber03.ff/ffbonded.itp
+	mv amber03.ff/ffnonbonded.itp.new amber03.ff/ffnonbonded.itp
 	
 	grompp -f test.mdp -c snap_ion_$i.gro -p snap.top -maxwarn 60|| exit
 	
