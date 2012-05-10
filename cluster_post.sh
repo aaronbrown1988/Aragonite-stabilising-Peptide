@@ -1,4 +1,5 @@
 #!/bin/bash
+JSE=/home/brown/analysis/n16n_best.pdb
 
 
 clusters=`mok '{println $i; $i++;}BEGIN {$i=0}' clusters.pdb | tail -n 1`
@@ -30,14 +31,9 @@ do
 	g_chi -s $i.pdb -f $i.pdb -g $i.gchi
 	rm order.xvg
 	~/src/utils/coupl-rmsd.pl $i.gchi.log ../../coupl/nmr.dat >> coupl_rmsd.tsv
-	let j=$i
-#	while [ "$j" -lt "4" ]
-#	do
-	#	rm rmsd.xvg
-	#	echo -e "4\n4\n" | g_rms -s $i -f $j;
-	#	sed -i -e "s/-1/$i\t$j/" rmsd.xvg
-	#	cat rmsd.xvg >> rmsd.tsv;
-	#	let "j = $j +1"
-#	done
+	rm rmsd.xvg
+	echo -e "4\n4\n" | g_rms -s $JSE -f $i;
+	sed -i -e "s/-1/$i/" rmsd.xvg
+	cat rmsd.xvg >> rmsd.tsv;
 done
 

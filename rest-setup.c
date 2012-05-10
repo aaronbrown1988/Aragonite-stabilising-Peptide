@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-
+#define AMBER 1
 
 int main(int argc, char *argv[]) {
 	int i, j;
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
 
 	if(argc!= 6) {
-		printf("USAGE rest-setup BASE.top replicas TL TH\n");
+		printf("USAGE rest-setup BASE.top rep_ID total_replicas TL TH\n");
 		printf("Setups REST replica exchange from a folder containing the base .top and the starting configurations");
 		exit(EXIT_FAILURE);
 	}		
@@ -110,14 +110,24 @@ int main(int argc, char *argv[]) {
 	fclose(out);
 	
 	/* Modify the dihedrals of charmm27.ff/ffbonded.itp */
+	#ifdef CHARMM
 	sprintf(outname, "./charmm27.ff/ffbonded.itp");
+	#endif
+	#ifdef AMBER
+	sprintf(outname, "./amber03.ff/ffbonded.itp");
+	#endif
 	bond = fopen(outname, "r");
+	#ifdef CHARMM
 	sprintf(outname, "./charmm27.ff/ffbonded.itp.new");
+	#endif
+	#ifdef AMBER
+	sprintf(outname, "./amber03.ff/ffbonded.itp.new");
+	#endif
 	out = fopen(outname, "w");
 	printf("Building %s", outname);
 
 	if(bond == (FILE*)NULL ) {
-		fprintf(stderr, "Couldn't open ffbonded.itp in charmm folder\n");
+		fprintf(stderr, "Couldn't open ffbonded.itp in forcefield folder\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -281,9 +291,19 @@ int main(int argc, char *argv[]) {
 
 
 	 // Modify charmm27.ff/ffnonbonded.itp 
+	 #ifdef CHARMM
 	sprintf(outname, "./charmm27.ff/ffnonbonded.itp", i);
+	#endif
+	#ifdef AMBER 
+	sprintf(outname, "./amber03.ff/ffnonbonded.itp", i);
+	#endif
 	bond = fopen(outname, "r");
+	#ifdef CHARMM
 	sprintf(outname, "./charmm27.ff/ffnonbonded.itp.new", i);
+	#endif
+	#ifdef AMBER
+	sprintf(outname, "./amber03.ff/ffnonbonded.itp.new", i);
+	#endif
 	out = fopen(outname, "w");
 	printf("Building %s", outname);
 

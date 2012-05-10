@@ -10,7 +10,7 @@ open(OUT, ">clust_time.xvg");
 
 
 print OUT "@\ttitle \"Clusters\"\n";
-print OUT "@\txaxis\tlabel	\"Time(ps)\"\n";
+print OUT "@\txaxis\tlabel	\"Steps\"\n";
 print OUT "@\tyaxis\tlabel	\"# Clusters\"\n";
 print OUT "\@TYPE xy\n";
 print OUT "@    s0 symbol 2\n";
@@ -25,6 +25,7 @@ while ($line = readline(FH)) {
 	($throw, $time, $curr) = split(/\s+/, $line);
 	if (!existing($curr)) {
 		$clust ++;
+		$time *= 1000;
 		print OUT "\t$time\t$clust\n";
 		push (@times, $time);
 		push(@prev, $curr);

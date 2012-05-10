@@ -231,6 +231,7 @@ while($line = readline(ALMP)) {
 	print OLMP "\t$params[0]\t$params[1]\t$params[2]\t$params[3]\t$params[4]\t$params[5]\t$params[6]\n";
 }
 
+print "$params[0] \n";
 
 #Move both files to the bonds sections
 
@@ -275,6 +276,7 @@ while($line = readline(ALMP)) {
 	print OLMP "\t$params[0]\t$params[1]\t$params[2]\t$params[3]\n";
 }
 
+print "$params[0] \n";
 
 
 #Move both files to the Angles sections
@@ -320,6 +322,7 @@ while($line = readline(ALMP)) {
 	print OLMP "\t$params[0]\t$params[1]\t$params[2]\t$params[3]\t$params[4]\n";
 }
 
+print "$params[0] \n";
 
 #Cpy Dihedrals as is, given that there shouldn't be any in the slab
 
@@ -366,6 +369,7 @@ while($line = readline(ALMP)) {
 	print OLMP "\t$params[0]\t$params[1]\t$params[2]\t$params[3]\t$params[4]\t$params[5]\n";
 }
 
+print "$params[0] \n";
 
 
 #Move to Impropers
@@ -410,6 +414,8 @@ while($line = readline(ALMP)) {
 	$params[5] += $atnum;
 	print OLMP "\t$params[0]\t$params[1]\t$params[2]\t$params[3]\t$params[4]\t$params[5]\n";
 }
+
+print "$params[0] \n";
 
 
 # Now to work out how to past bits into the inp file.....
@@ -508,7 +514,7 @@ while ($line = readline(ALMP)) {
 	$line =~ s/^\s+//;
 	@params = split(/\s+/, $line);
 #	$params[0] += 1;
-	print OINP "dihedral_coeff\t$params[0]\t$params[1]\t$params[2]\t$params[3]\n";
+	print OINP "dihedral_coeff\t$params[0]\t$params[1]\t$params[2]\t$params[3]\t$params[4]\t$params[5]\t$params[6]\n";
 }
 
 #move to pair
@@ -547,7 +553,7 @@ while ($line = readline(ALMP)) {
 	$line =~ s/^\s+//;
 	@params = split(/\s+/, $line);
 	$params[0] += 5;
-	print OINP "pair_coeff\t$params[0]\t$params[0]\tlj/charm/coul/long\t\t$params[1]\t$params[2]\t$params[3]\n";
+	print OINP "pair_coeff\t$params[0]\t$params[0]\tlj/charmm/coul/long\t\t$params[1]\t$params[2]\t$params[3]\n";
 }
 
 while ($line = readline(SINP)) {
