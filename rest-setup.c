@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 #define AMBER 1
+#define DB 0
+#define DEBUG if(DB==1)
 
 int main(int argc, char *argv[]) {
 	int i, j;
@@ -83,7 +85,7 @@ int main(int argc, char *argv[]) {
 		for (j =0; j < ntypes; j++) {
 			if (strstr(types[j], type)) {
 				found = 1;
-//				printf("found %s\n", type);
+				DEBUG printf("found %s\n", type);
 				break;
 			}
 		}
@@ -174,7 +176,7 @@ int main(int argc, char *argv[]) {
 		if (found == 2) {
 			mA = mA *l;
 			fprintf(out, "%sp\t%sp\t%d\t%3.2lf\t%lf\n", type, res,  cgnr, cA, mA);
-			//printf("Matched bond %s %s\n", type, res);
+			DEBUG printf("Matched bond %s %s\n", type, res);
 		}
 	}
 
@@ -286,27 +288,37 @@ int main(int argc, char *argv[]) {
 	fclose(bond);
 	printf("done!\n");
 
-
-
+	
 
 
 	 // Modify charmm27.ff/ffnonbonded.itp 
+	
 	 #ifdef CHARMM
-	sprintf(outname, "./charmm27.ff/ffnonbonded.itp", i);
+	sprintf(outname, "./charmm27.ff/ffnonbonded.itp");
 	#endif
+	
 	#ifdef AMBER 
-	sprintf(outname, "./amber03.ff/ffnonbonded.itp", i);
+	sprintf(outname, "./amber03.ff/ffnonbonded.itp");
+	
 	#endif
+	
 	bond = fopen(outname, "r");
+	
 	#ifdef CHARMM
-	sprintf(outname, "./charmm27.ff/ffnonbonded.itp.new", i);
+	sprintf(outname, "./charmm27.ff/ffnonbonded.itp.new");
 	#endif
+	
 	#ifdef AMBER
-	sprintf(outname, "./amber03.ff/ffnonbonded.itp.new", i);
+	sprintf(outname, "./amber03.ff/ffnonbonded.itp.new");
 	#endif
+	
 	out = fopen(outname, "w");
 	printf("Building %s", outname);
 
+	if (out == (FILE*)NULL) {
+		fprintf(stderr, "Couldn't open nonbonded output file\n");
+		exit(EXIT_FAILURE);
+	}
 	if(bond == (FILE*)NULL ) {
 		fprintf(stderr, "Couldn't open ffbonded.itp in charmm folder\n");
 		exit(EXIT_FAILURE);
@@ -320,7 +332,9 @@ int main(int argc, char *argv[]) {
 			}
 		
 	}
-	printf("..atom types..");	
+	
+	printf("..atom types..");
+		
 	while(at == 1) {
 		fgets(buffer,sizeof(buffer),bond);
 		if (strlen(buffer) < 3) {
@@ -350,7 +364,7 @@ int main(int argc, char *argv[]) {
 	}	
 
 	// pair types
-
+	#ifdef CHARMM
 	while(fgets(buffer,sizeof(buffer),bond)) {
 		fprintf(out, "%s", buffer);
 		if (strstr(buffer, "pairtypes")) {
@@ -402,10 +416,11 @@ int main(int argc, char *argv[]) {
 		fprintf(out, "%s", buffer);		
 		fgets(buffer,sizeof(buffer),bond);
 	}
+	#endif
 	
 	sprintf(outname, "../test.mdp");
 	bond = fopen(outname, "r");
-	sprintf(outname, "./test.mdp", i);
+	sprintf(outname, "./test.mdp");
 	out = fopen(outname, "w");
 	
 	

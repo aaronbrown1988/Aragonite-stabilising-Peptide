@@ -2,7 +2,7 @@
 
 
 for i in {0..23}; do
-    	cp -r ./amber03.ff $i/
+    cp -rf ./amber03.ff $i/
 	cd $i
 	cp ../snap_$i.gro ./
 	cp ../test.mdp ./
@@ -26,7 +26,7 @@ for i in {0..23}; do
 	echo -e "13\n" | genion -nn 3 -nname CL -p snap.top -g ion.log  -o snap_ion_$i.gro || exit 
 	
 	~/utils/rest-setup snap.top $i 24 300 500
-
+#	exit
 	mv snap.top.new snap.top
 	mv amber03.ff/ffbonded.itp.new amber03.ff/ffbonded.itp
 	mv amber03.ff/ffnonbonded.itp.new amber03.ff/ffnonbonded.itp
