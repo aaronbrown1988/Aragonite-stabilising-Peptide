@@ -11,21 +11,38 @@ my $wbx_l=18.6206; # Size of water box in A;
 my $gap = 8; # Size of gap around solute;
 
 
-#Water Parameters - SPC/FW
 $kc2ev = 0.04336;
 
+#Water Parameters - SPC/FW
+#$kb = 1059.162 * $kc2ev;
+#$b0 = 1.0123;
+#
+#$cth = 75.9 * $kc2ev;
+#$th0 = 113.24;
+#$ub = 0;
+#$cub = 0.0;
+
+#$oeps = 0.1554253 * $kc2ev;
+#$heps = 0;
+#$osig = 3.1506;
+#$hsig = 0;
+
+
+#TIP3p
 $kb = 1059.162 * $kc2ev;
-$b0 = 1.0123;
+$b0 = 0.9572;
 
 $cth = 75.9 * $kc2ev;
-$th0 = 113.24;
+$th0 = 104.52;
 $ub = 0;
 $cub = 0.0;
 
-$oeps = 0.1554253 * $kc2ev;
+$oeps = 0.1521 * $kc2ev;
 $heps = 0;
 $osig = 3.1506;
 $hsig = 0;
+
+
 
 $owc = -0.82;
 $hwc = 0.41;
@@ -431,3 +448,17 @@ sub check {
 		
 }
 
+close(INP);
+if ( -e 'suggested.inp') {
+	open(INP, '+<suggested.inp') || die "couldn't open suggested.inp for modifying: $!\n";
+	@suggested = <INP>;
+	seek(INP,0,0);
+	foreach $line (@suggested) {
+		print INP $line;
+		if ($line =~ /.*minimize.*/) {
+			print INP "fix 1 all shake 0.001 10 0 b $last_bt\n";
+		}
+	}
+	truncate(INP, tell(INP));
+	close(INP);
+}

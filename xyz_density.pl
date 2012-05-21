@@ -11,7 +11,7 @@ use Fcntl qw/:seek/;
 $wind_size = 1;
 $stride = 0.2;
 $zlo = 0;
-$zhi = 62;
+$zhi = 60.9;
 #$act = 9.97e-25; # g/(Angstrom^3)
 $act = 9.97e-2; # reduced power
 

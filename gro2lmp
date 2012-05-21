@@ -156,6 +156,9 @@ sub parse_atoms {
 		$charge{$cur_type} = $cur_charge;
 	}
 	close(TOP);
+#	foreach (keys(%typeconv)) {
+#		print "$_ $typeconv{$_}\n";
+#	}
 }
 
 sub parse_bonds {
@@ -442,7 +445,6 @@ sub suggested_inp {
 	print  INP "dihedral_style charmm\n";
 	print  INP "improper_style harmonic\n";
 	print  INP "pair_style lj/charmm/coul/long 8.0 10.0\n";
-	print  INP "pair_modify	mix arithmetic\n";
 	#Specifiy 1-4 interactions
 	print  INP "kspace_style pppm 1.0e-4\n";
 	print  INP "special_bonds charmm\n";
@@ -465,7 +467,7 @@ sub suggested_inp {
 	}
 		
 		
-	print INP  "pair_modify tail yes\n";
+	print INP  "pair_modify tail yes mix arithmetic\n";
 	
 	print  INP "min_style sd\n";
 	
@@ -636,14 +638,14 @@ print "\n";
 print "Masses\n\n";
 $i = 1;
 foreach (keys(%mass)) {
-	print "\t$i\t$mass{$_}\t# $_\n";
+	print "\t$typeconv{$_}\t$mass{$_}\t# $_\n";
 	$i++;
 }
 print "\nPair Coeffs\n\n";
 $i = 1;
 foreach $_ (keys(%mass)) {
 	$tmp = "$_-$_";
-	print  "\t$i\t$eps{$_}\t$sig{$_}\t$eps14{$tmp}\t$sig14{$tmp}\n";
+	print  "\t$typeconv{$_}\t$eps{$_}\t$sig{$_}\t$eps14{$tmp}\t$sig14{$tmp}\n";
 	$i++
 }
 

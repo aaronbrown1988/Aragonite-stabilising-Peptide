@@ -43,8 +43,8 @@ j=$[$i-1]
 k=$[$i*500]
 l=$[$j*500]
  g_rama -f $XTC -s $TPR -o rama-$l -b $l -e $k -dt 10; 
- ~/src/utils/patchy_rama.pl rama-$l >> patchy_detail.tsv
- ~/src/utils/patchy_rama_corse.pl rama-$l >>patchy_coarse.tsv
+ ~/src/utils/patchy_rama.pl rama-$l.xvg >> patchy_detail.tsv
+ ~/src/utils/patchy_rama_corse.pl rama-$l.xvg >>patchy_coarse.tsv
 done
 
 
