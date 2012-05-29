@@ -475,9 +475,9 @@ sub suggested_inp {
 	
 	print  INP "dump 2 all dcd 500 full.dcd\n";
 	print  INP "dump_modify 2 unwrap yes first yes\n";
-	
+#	print INP "fix 99 all box/relax iso 1.0\n";
 	print  INP "minimize 1.0e-4 1.0e-6 10000 10000\n";
-	
+#	print INP "unfix 99\n";
 	print INP "velocity all create 300.0 30446 mom yes dist gaussian\n";
 	
 	

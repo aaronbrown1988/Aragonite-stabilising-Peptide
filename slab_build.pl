@@ -5,9 +5,9 @@ $a = 4.9614;
 $b = 7.9671;
 $c = 5.7404;
 
-$imax = 5;
-$jmax = 3;
-$kmax = 2;
+$imax = 24; #5;
+$jmax = 15; #3;
+$kmax = 3;# 2;
 
 $cells = $imax *$jmax *$kmax;
 
@@ -78,9 +78,9 @@ print "\n";
 print "Atoms\n\n";
 
 
-for ($i =0; $i < 5; $i++ ) {
-	for ($j = 0; $j < 3; $j++) {
-		for ($k = 0; $k < 2; $k++) {
+for ($i =0; $i < $imax; $i++ ) {
+	for ($j = 0; $j < $jmax; $j++) {
+		for ($k = 0; $k < $kmax; $k++) {
 			$offset[0] = $i * $a;
 			$offset[1] = $j * $b;
 			$offset[2] = $k * $c;

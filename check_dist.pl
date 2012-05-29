@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+use POSIX qw/ceil floor/;
 
 open(FH, $ARGV[0]);
 
@@ -69,7 +70,13 @@ for($i=0; $i< $atoms; $i++) {
 }}}
 
 print "Slab bounds:\n";
-print  "$xmin -> $xmax\n";
-print  "$ymin -> $ymax\n";
-print  "$zmin -> $zmax\n";
+$xmin = floor($xmin);
+$ymin = floor($ymin);
+$zmin = floor($zmin);
+$xmax = ceil($xmax);
+$ymax = ceil($ymax);
+$zmax = ceil($zmax);
+print  "$xmin $xmax xlo xhi\n";
+print  "$ymin $ymax ylo yhi\n";
+print  "$zmin $zmax zlo zhi\n";
 

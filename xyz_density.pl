@@ -8,7 +8,7 @@ use Fcntl qw/:seek/;
 
 
 #Configuration
-$wind_size = 1;
+$wind_size = 1.5;
 $stride = 0.2;
 $zlo = 0;
 $zhi = 60.9;
@@ -57,7 +57,7 @@ while($line = readline(DATA)) {
 	$xmin = ($i < $xmin) ? $i: $xmin;
 	$ymax = ($j > $ymax) ? $i: $ymax;
 	$ymin = ($j < $ymin) ? $i: $ymin;
-	if ($type == 4) {
+	if ($type == 4 || $type == 5) {
 		push(@x, $i);
 		push(@y, $j);
 		push(@z, $k);
@@ -80,10 +80,15 @@ for ($i=$zlo; $i < $zhi; $i += $stride) {
 			$n ++;
 		}
 	}
+	
+	$n = $n/3;
 	$density =$n / $vol; # Number per A^3
 	$n = $n / $vol;
+
+
 	#$density *= 0.001; # Number per nm^3
 	$density *= (18/6); # g/nm^3
+	
 	$density = $density / $act; # ratio compared to known bulk
 	$mid = $i + 0.5 * $wind_size;
 	print "$mid\t$density\t$n\n";
