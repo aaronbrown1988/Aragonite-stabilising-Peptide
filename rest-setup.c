@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#define AMBER 1
+#define CHARMM 1
 #define DB 0
 #define DEBUG if(DB==1)
 

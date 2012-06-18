@@ -14,11 +14,12 @@ cd $DATE
 mkdir cluster
 cd cluster
 
-for i in {'0.1','0.25','0.5'}; do
+#for i in {'0.1','0.25','0.5','0.7'}; do
+for i in {'0.25','0.4','0.5','0.6'}; do
 	mkdir $i;
 	cd $i;
 
-	echo -e "4\n1\n" |  g_cluster -f $XTC -s  $TPR -g cluster.log -clid clust-id.xvg -cl clusters.pdb -dt 10 -method gromos -cutoff $i
+	echo -e "4\n1\n" |  g_cluster -f $XTC -s  $TPR -g cluster.log -clid clust-id.xvg -cl clusters.pdb -dt 10 -method gromos -cutoff $i -minstruct 1
 
 	bash ~/src/utils/cluster_post.sh
 	~/src/utils/clust_criteria.pl clust-id.xvg

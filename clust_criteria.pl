@@ -27,7 +27,7 @@ while ($line = readline(FH)) {
 	}
 	($throw, $time, $curr) = split(/\s+/, $line);
 	if ($clust != $curr) {
-		if($life >= 5 && !existing($clust)) {
+		if($life >= 2 && !existing($clust)) {
 			push(@accepted, $clust);
 			$n++;
 		}
@@ -37,7 +37,7 @@ while ($line = readline(FH)) {
 	} else {
 		$life++;
 	}
-	if($prev[$curr] > 5 && !existing($curr)) {
+	if($prev[$curr] > 1 && !existing($curr)) {
 		push(@accepted, $curr);
 		$n++;
 	}	
