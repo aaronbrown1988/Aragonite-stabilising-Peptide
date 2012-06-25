@@ -20,9 +20,9 @@ while ($line = readline(FRAC)) {
 	push(@atoms, $line);
 }
 
-for ($i =0; $i < 2; $i++) {
-	for ($j = 0; $j < 2; $j++) {
-		for ($k = 0; $k < 2; $k++) {
+for ($i =0; $i < 1; $i++) {
+	for ($j = 0; $j < 1; $j++) {
+		for ($k = 0; $k < 1; $k++) {
 			foreach $line (@atoms) {
 				@params = split(/\s+/, $line);
 				$params[0] =~ tr/a-z/A-Z/;
@@ -53,10 +53,30 @@ for ($i =0; $i < 2; $i++) {
 	}
 }
 
-$mol->printf("%f\n");
 
-find_bonds($mol);
+
+
+
+find_bonds($mol, tolerance => 1.2);
+$mol->add_implicit_hydrogens();
+#$mol->sprout_hydrogens();
+$mol->printf("%f\n");
+print "Mass: ",$mol->mass, "\n";
+print "Charge: ",$mol->charge, "\n";
+
+
 $mol->write("out.pdb");
+
+for $atoms ($mol->atoms) {
+	print $atoms->symbol();
+#	print $atoms->valence();
+	
+	print $atoms->implicit_hydrogens(), "\n";
+}
+
+
+
+
 
 $mol->printf("Bonds: %b\n");
 foreach $bond ($mol->bonds) {
@@ -88,3 +108,5 @@ sub write_gmx {
 		
 	close(GMX);
 }
+
+
