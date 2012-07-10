@@ -92,6 +92,15 @@ cat ~/src/utils/head_rama density_plot > rama-color-20-30ns.xvg
 rm density_plot
 
 
+g_rama -f $XTC -s $TPR -o rama-30ns -dt 10 -b 30000
+ cat rama-30ns.xvg | sed -e 's/^[#@].*//' > tmp.lou;
+lines=`cat tmp.lou | wc -l`
+echo -e "$lines\n" | ~/src/utils/a.out tmp.lou
+rm tmp.lou
+cat ~/src/utils/head_rama density_plot > rama-color-30ns.xvg
+rm density_plot
+
+
 
 cd ..
 
