@@ -95,8 +95,8 @@ sub angles
 	print "Doing Angles: $line \n";
 	@params = split(/\s+/, $line);
 	if ($params[5] eq '!') {
-		$params[5] = "";
-		$params[6] = "";
+		$params[5] = 0.0;
+		$params[6] = 0.0;
 	}
 	$params[3] *= $kj;
 	$params[5] *= $kj;
@@ -114,7 +114,7 @@ sub imp
 	print "Doing Impropers: $line \n";
 	@params = split(/\s+/, $line);
 	$params[4] *= $kj;
-	print FFBOND "$params[0]\t$params[1]\t$params[2]\t$params[3]\t5\t$params[6]\t$params[4]\t$params[5]\n"
+	print FFBOND "$params[0]\t$params[1]\t$params[2]\t$params[3]\t4\t$params[6]\t$params[4]\t$params[5]\n"
 }
 
 sub nb
@@ -127,5 +127,26 @@ sub nb
 		return;
 	}
 	$params[2] *= -1;
-	print FFNBOND "$params[0]\tATNUM\t$mass{$params[0]}\t$charge{$params[0]}\tA\t$params[3]\t$params[2]\n";
+	
+	# Some magic numbers for the atomic number required by GMX.
+	# We infer this from the first letter of the atom type which generally specifies the element
+	if ($params[0] =~ /C.*/) {
+		$atnum = 6;
+	}
+	if ($params[0] =~ /N.*/) {
+		$atnum = 7;
+	}
+	if ($params[0] =~ /O.*/) {
+		$atnum = 8;
+	}
+	if ($params[0] =~ /H.*/) {
+		$atnum = 1;
+	}
+	if ($params[0] =~ /P.*/) {
+		$atnum = 15;
+	}
+	if ($params[0] =~ /S.*/) {
+		$atnum = 16;
+	}
+	print FFNBOND "$params[0]\t$atnum\t$mass{$params[0]}\t$charge{$params[0]}\tA\t$params[3]\t$params[2]\n";
 }
