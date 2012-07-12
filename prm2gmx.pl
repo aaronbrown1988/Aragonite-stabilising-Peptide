@@ -86,7 +86,9 @@ sub bonds
 {
 	print "Doing Bonds: $line \n";
 	@params = split(/\s+/, $line);
-	$params[2] *= $kj;
+	$params[2] *= ($kj*2/0.01);
+#	$params[3] *= 100;
+	$params[3] /= 10;
 	print FFBOND "$params[0]\t$params[1]\t1\t$params[3]\t$params[2]\n"
 }
 
@@ -98,8 +100,9 @@ sub angles
 		$params[5] = 0.0;
 		$params[6] = 0.0;
 	}
-	$params[3] *= $kj;
-	$params[5] *= $kj;
+	$params[3] *= $kj*2;
+	$params[5] *= ($kj/0.01)*2;
+	$params[6] /= 10;
 	print FFBOND "$params[0]\t$params[1]\t$params[2]\t5\t$params[4]\t$params[3]\t$params[6]\t$params[5]\n"
 } 
 sub dih
@@ -113,7 +116,7 @@ sub imp
 {
 	print "Doing Impropers: $line \n";
 	@params = split(/\s+/, $line);
-	$params[4] *= $kj;
+	$params[4] *= $kj*2;
 	print FFBOND "$params[0]\t$params[1]\t$params[2]\t$params[3]\t4\t$params[6]\t$params[4]\t$params[5]\n"
 }
 
@@ -127,7 +130,10 @@ sub nb
 		return;
 	}
 	$params[2] *= -1;
-	
+	$params[2] *= $kj * (2**(5/6));
+	$params[3] /= 10;
+	$params[3] *= 2;
+		
 	# Some magic numbers for the atomic number required by GMX.
 	# We infer this from the first letter of the atom type which generally specifies the element
 	if ($params[0] =~ /C.*/) {
