@@ -130,7 +130,7 @@ sub find_angles
 	my @bonds = $mol->bonds();
 
 	for ($i = 0; $i < @bonds; $i++ ) {
-		for ($j = $i; $j < @bonds; $j++) {
+		for ($j = 0; $j < @bonds; $j++) {
 			@aa = $bonds[$i]->atoms();
 			@ab = $bonds[$j]->atoms();
 			sort(@aa);
