@@ -55,14 +55,14 @@ while ($line = readline(STR)) {
 	}
 }
 #We build our own dih and angles (for better or for worse) so we are done with the topology
-close (STR);
+#close (STR);
 
 #See if parameters are near by, if so populate mass
 if ( -f "./atomtypes.atp") {
 	print "Found atomtypes knocking around, can fill in the masses\n";
 	open (FF, "./atomtypes.atp");
-	while ($line = readline(FF)) {
-		@params = split(/\s+/, $line);
+	while ($line2 = readline(FF)) {
+		@params = split(/\s+/, $line2);
 		$mass{$params[0]} = $params[1];
 	}
 	close(FF);
@@ -76,6 +76,8 @@ if ( -f "./atomtypes.atp") {
 
 find_angles();
 find_dih();
+
+#read_ic();
 
 write_top();
 
@@ -94,8 +96,10 @@ sub find_dih
 	my @bonds = $mol->bonds();
 
 	for ($i = 0; $i < @bonds; $i++ ) {
-		for ($j = $i; $j < @bonds; $j++) {
-			for ($k = $j; $k < @bonds; $k++) {
+		for ($j = 0; $j < @bonds; $j++) {
+			if ($i == $j) { next;}
+			for ($k = 0; $k < @bonds; $k++) {
+					if( $k == $i || $k == $j) { next;}
 					@aa = $bonds[$i]->atoms();
 					@ab = $bonds[$j]->atoms();
 					@ac = $bonds[$k]->atoms();
@@ -131,6 +135,7 @@ sub find_angles
 
 	for ($i = 0; $i < @bonds; $i++ ) {
 		for ($j = 0; $j < @bonds; $j++) {
+			if ($i == $j) { next;}
 			@aa = $bonds[$i]->atoms();
 			@ab = $bonds[$j]->atoms();
 			sort(@aa);
@@ -141,12 +146,15 @@ sub find_angles
 			if ($aa[1] eq $ab[0] ) {
 			#	print "a-b\n";
 				push(@angles, "$aa[0]-$ab[0]-$ab[1]");
-			} elsif ($aa[1] eq $ab[0] ) {
+			} elsif ($aa[1] eq $ab[1] ) {
 				push(@angles, "$aa[0]-$ab[1]-$ab[0]");
+			}elsif ( $aa[0] eq $ab[0] ) {
+				push (@angles, "$aa[1]-$aa[0]-$ab[1]");
+			}elsif ( $aa[0] eq $ab[1] ) {
+				push (@angles, "$aa[1]-$aa[0]-$ab[0]");
 
 			} else {
-
-				#print "I don't think @aa @ab make an  angle\n";
+			#	print "I don't think @aa @ab make an  angle\n";
 			}
 
 			
@@ -204,8 +212,19 @@ sub write_top
 		$dih = $dihedrals[$i];
 		$dih =~ s/a//g;
 		$dih =~ s/-/\t/g;
-		print TOP "$dih\t$dihtypes[$i]\n";
+		print TOP "$dih\t9\n";
 	}
+
+	print TOP "\n\n";
+	print TOP "\n\n";
+	print TOP  "[ dihedrals ]\n";
+	for($i =0; $i < @imp; $i++ ) {
+		$dih = $imp[$i];
+		$dih =~ s/a//g;
+		$dih =~ s/-/\t/g;
+		print TOP "$dih\t4\n";
+	}
+	
 
 	print TOP "\n\n";
 	print TOP "[ System ]\n";
@@ -216,6 +235,60 @@ sub write_top
 	print TOP "Other\t 1\n";
 
 	close(TOP);
+}
+
+
+sub read_ic
+{
+	#
+	# Reads the IC table from charmms rtf topology to attempt to combat not having enough dihedrals and angles defined
+	#
+	do {
+		@params = split(/\s+/, $line);
+		# COnvert to atom numbers
+		$a[0] = $mol->atoms_by_name($params[1]);
+		$a[1] = $mol->atoms_by_name($params[2]);
+		$a[3] = $mol->atoms_by_name($params[4]);
+
+		if ($line =~ /IMPR.*/) {
+			$a[2] = $mol->atoms_by_name($params[3]);
+			# line contains an improper
+			$line =~ s/IMPR //;
+			$line =~ s/\n//;
+			$line =~ s/\s+/-/g;
+			push(@imp, "$a[0]-$a[1]-$a[2]-$a[3]");
+		} elsif ($line =~ /IC.*/) {
+			next;
+			# Line contains IC record
+			
+
+			if ($params[3] =~ /\*.*/) {
+				#is improper
+				$params[3] =~ s/\*//;
+				$a[2] = $mol->atoms_by_name($params[3]);
+				if ($params[7] < 0) {
+					push(@imp, "$a[3]-$a[1]-$a[2]-$a[0]");
+				} else {
+					push(@imp, "$a[0]-$a[1]-$a[2]-$a[3]");
+
+				}
+			} else {
+				$a[2] = $mol->atoms_by_name($params[3]);
+				if ($params[7] < 0) {
+					push(@dihedrals, "$a[3]-$a[1]-$a[2]-$a[0]");
+				} else {
+					push(@dihedrals, "$a[0]-$a[1]-$a[2]-$a[3]");
+				}
+			#Angles from the line
+			push (@angles, "$a[0]-$a[1]-$a[2]");
+			push (@angles, "$a[1]-$a[2]-$a[3]");
+			}
+
+
+		}
+		$line = readline(STR);
+	} while  (length($line) > 3);
+
 }
 
 
