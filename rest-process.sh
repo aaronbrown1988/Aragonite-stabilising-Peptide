@@ -39,7 +39,7 @@ cd ..
 mkdir ramas
 cd ramas
 
-for i in {1..48} ; do
+for i in {1..82} ; do
 j=$[$i-1]
 
 k=$[$i*500]

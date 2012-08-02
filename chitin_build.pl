@@ -6,7 +6,7 @@ use Chemistry::Bond::Find  ':all';
 use Chemistry::Ring::Find  ':all';
 use Chemistry::File::SMILES;
 use Chemistry::3DBuilder qw(build_3d);
-
+my $proto = Chemistry::Mol->new(id=>'Proto');
 
 #
 # Hopefully build a slab of chitin in a PDB
@@ -22,19 +22,89 @@ $c = readline(FRAC);
 $mol = Chemistry::Mol->new(id => 'beta', name => 'Beta-Chitin');
 while ($line = readline(FRAC)) {
 	push(@atoms, $line);
+	
+}
+#screw || a
+$atnum = @atoms;
+for($i = 0; $i < $atnum; $i++) {
+	$line = $atoms[$i];
+	@params = split(/\s+/, $line);
+	$params[0] =~ tr/a-z/A-Z/;
+	$sym = $params[0];
+	$sym =~ /(.).*/;
+	$sym = $1;
+	$x = $params[1];
+	$y = $params[2];
+	$z = $params[3];
+
+	# Screw axis parallel to b
+	$x += 0.5;# * $a;
+	$z = -1*$z;
+	$y = -1*$y;
+	$line = "$sym\t$x\t$y\t$z\n";
+	push(@atoms, $line);
+}
+# Screw || b
+#$atnum = @atoms;
+for($i = 0; $i < $atnum; $i++) {
+	$line = $atoms[$i];
+	@params = split(/\s+/, $line);
+	$params[0] =~ tr/a-z/A-Z/;
+	$sym = $params[0];
+	$sym =~ /(.).*/;
+	$sym = $1;
+	$x = $params[1];
+	$y = $params[2];
+	$z = $params[3];
+
+	# Screw axis parallel to b
+	$y += 0.5;# * $b;
+	$z = -1*$z;
+	$x = -1*$x;
+#
+	$line = "$sym\t$x\t$y\t$z\n";
+	push(@atoms, $line);
+}
+
+
+#screw || c
+
+#$atnum = @atoms;
+for($i = 0; $i < $atnum; $i++) {
+	$line = $atoms[$i];
+	@params = split(/\s+/, $line);
+	$params[0] =~ tr/a-z/A-Z/;
+	$sym = $params[0];
+	$sym =~ /(.).*/;
+	$sym = $1;
+	$x = $params[1];
+	$y = $params[2];
+	$z = $params[3];
+
+	# Screw axis parallel to c
+	$z += 0.5;# * $c;
+	$y = -1*$y;
+	$x = -1*$x;
+
+	$line = "$sym\t$x\t$y\t$z\n";
+	push(@atoms, $line);
 }
 
 
 
 
-for ($i =0; $i < 1; $i++) {
-	for ($j = 0; $j < 1; $j++) {
-		for ($k = 0; $k < 1; $k++) {
+
+
+
+for ($i =0; $i < 4; $i++) {
+	for ($j = 0; $j < 2; $j++) {
+		for ($k = 0; $k < 2; $k++) {
 			foreach $line (@atoms) {
 				@params = split(/\s+/, $line);
 				$params[0] =~ tr/a-z/A-Z/;
 				$sym = $params[0];
-				$sym =~ s/[0-9].*//;
+				$sym =~ /(.).*/;
+				$sym = $1;
 				$params[1] *=$a;
 				$params[2] *=$b;
 				$params[3] *=$c;
@@ -44,76 +114,219 @@ for ($i =0; $i < 1; $i++) {
 				$params[1] +=$i*$a;
 				$params[2] +=$j*$b;
 				$params[3] += $k*$c;
-				$mol->new_atom(symbol => $sym, name=>$params[0], coords => [$params[1], $params[2], $params[3]]);
-				
-
-				# Screw axis parallel to b
-				$y += 0.5 * $b;
-				$z = -1*$z;
-
-				$x += $i*$a;
-				$y += $j * $b;
-				$z += $k * $c;
-			#	$mol->new_atom(symbol => $params[0], coords => [$x, $y, $z]);  # Screw axis reflection
-
-					
+				$mol->new_atom(symbol => $sym, type => $sym, name=>$params[0], coords => [$params[1], $params[2], $params[3]]);
 			}
 		}
 	}
 }
+@atoms = $mol->atoms;
+
+for($i = 0; $i < @atoms; $i++ ) {
+	$at = $mol->by_id($atoms[$i]);
+	$tmp = $at->name;
+	$at->symbol("$tmp");
+#	$at->type($at->name);
+	print $at{type};
+}
+	
+
+
+$mol->write("out.pdb");
+
+
+
+exit;
+
+
+
+#### No Longer needed Hopfully #### 
+
+
 @atoms = $mol->atoms();
 $mol->new_bond(atoms => [$atoms[13], $atoms[6]], order => 2);
 
 
-
 find_bonds($mol,  tolerance => 1.2);
+
 
 #assign_bond_orders($mol, method => 'baber');
+@tofix = $mol->atoms_by_name("O7");
 
 
 
-$mol->add_implicit_hydrogens();
-$mol->sprout_hydrogens();
-find_bonds($mol,  tolerance => 1.2);
+# Fix bond orders
+@bonds = $mol->bonds();
+for ($i =0; $i < @bonds; $i++) {
+	$bfix = $mol->by_id($bonds[$i]);
+	$bfix->order(1);
+}
 
-build_3d($mol);
-#$mol->printf("%f\n");
-#print "Mass: ",$mol->mass, "\n";
-#print "Charge: ",$mol->charge, "\n";
+for ($i =0; $i < @tofix; $i++) {
+	$afix = $mol->by_id($tofix[$i]);
+	@bn = $afix->bonds_neighbors();
+	$bfix = $bn[0]->{bond};
+	print "fixing $afix $bn $bfix\n";
+	$bfix->order(2.0);
+}
+
+
+
+# Add implicit hydrogens
+#$mol->add_implicit_hydrogens();
+#$mol->sprout_hydrogens();
+
+$c1 = $mol->by_id($mol->atoms_by_name('C1'));
+$c1->sprout_hydrogens();
+@neigh = $c1->neighbors();
+foreach $_ (@neigh) {
+ if($_->symbol =~ /H.*/) {
+	print "$_\n";
+	my $ic = Chemistry::InternalCoords->new(
+        $_, $c1, 1.152, $neigh[1], 110.1
+    );
+	$_->coords($ic->cartesians);
+}}
+
+read_prototype();
+apply_prototype();
 
 
 
 $mol->printf("%s - %n (%f). %a atoms, %b bonds; ","mass=%m; charge =%q; type=%t; id=%i");
 
-$mol->write("out.pdb");
 
-for $atoms ($mol->atoms) {
-	print $atoms->symbol();
-#	print $atoms->valence();
+
+
+
+
+sub apply_prototype
+{
+	my @params;
+	my $redo=0;
+	@atoms = $mol->atoms();
+	for($i = 0; $i < @atoms; $i++) {
+		$at = $mol->by_id($atoms[$i]);
+		$at->add_implicit_hydrogens();
+		$at->sprout_hydrogens();
+		if ($at->total_hydrogens == 0) {
+			next;
+		}
+
+		print "Fixing $at - ", $at->name,"..";
+		@neighbors = $at->neighbors();
+		$hval = ($at->name =~ /(.T|C6)/)? 1: "";
+		$hpref = $at->name;
+		$hpref = "H$hpref";
+		$hpref =~ s/C//;
+		print "Found @neighbors...";
+		foreach $tmp (@neighbors) {
+			if ($tmp->symbol !~ /.*H.*/) {
+				next;
+			}
+
+			$hn = "$hpref$hval";
+			print ".....Placing $hn - ",$tmp,"...";
+			for ($k = 0; $k < @ic; $k++) {
+				if ($ic[$k] !~ /.*$hn.*/) {
+					next;
+				}
+				@params = split(/\s+/,$ic[$k]);
+			#	print "$ic[$k] applies to $hn\n";
+				$tmp->name($hn);
+				# Probably a better way than this:
+				@coords= [];
+				$params[3] =~ s/^\*//;
+				@matched = grep {$_->name eq $params[2]} @neighbors;
+#				print "$params[2] ",$at->name,"=",$params[3],"\n";
+				
+				if ($params[4] =~ /.*$hn.*/ && $at->name eq $params[3] ) {
+#					print "Matched $params[3] and $params[4]\n";
+					@dih = [];
+					if ($matched[0] != '') {
+						print $matched[0]->name," is needed in ic def...\n";
+						@dih = grep {$_->name eq $params[1]} $matched[0]->neighbors;
+						print "$tmp,$at,$params[9],$matched[0],$params[8],$dih[0],$params[7]\n";
+						if (@dih >  0 ) {
+							print "I have an idea on dih\n";
+							$ic = Chemistry::InternalCoords->new($tmp,$at, $params[9], $matched[0], $params[8]);#, $dih[0], -$params[7]);
+						} else {
+							$ic = Chemistry::InternalCoords->new($tmp,$at, $params[9], $matched[0], $params[8]);
+						}
+						$tmp->coords($ic->cartesians);
+					} else {
+						print "Angles didn't match?!?!?!\n";
+						$redo = 1;
+					}
+
+				}
+
+
+				
+
+
+			}
+			$hval++;
+		}
+
+				
+	}
+	if ($redo == 1) {
+		apply_prototype();
+	}
+}
+
+
+
+
+
+
+
+sub read_prototype
+{
+	my $line;
+	my $params;
+	open(STR, $ARGV[1]) || die "Couldn't open charmm residue file: $ARGV[1]\n";
+	while ($line = readline(STR)){
+		if ($line =~ /.*BGLCNA.*/) {
+			last;
+		}
+	}
+	$line = readline(STR);
+	$line = readline(STR);
+	while ($line = readline(STR)) {
+		if (length($line) < 3) {
+			last;
+		}
+		@params = split(/\s+/,$line);
+	#	$proto->add_atom( name => $params[1], type => $params[2], formal_charge=>$params[3]);
+	}
+
+	while ($line = readline(STR)) {
+		if ($line =~ /IMPR.*/) {
+			last;
+		}
+		@params = split(/\s+/,$line);
+		for ($i = 0; $i < @params; $i += 2) {
+			$proto->new_bond(atoms => [$proto->atoms_by_name($params[$i]),$proto->atoms_by_name($params[$i+1])] );	
+		}
+	}
 	
-	print $atoms->implicit_hydrogens(), "\n";
+	$line = readline(STR);
+	$line = readline(STR);
+#	print $line;
+	while ($line = readline(STR)) {
+		if ($line !~ /IC.*/) {
+		#	print "Finished as just read $line from IC table\n";
+			last;
+		}
+		chomp($line);
+		push(@ic,$line);
+	#	@params->
+	}
+	close(STR);
+
+
 }
-
-
-
-
-
-$mol->printf("Bonds: %b\n");
-foreach $bond ($mol->bonds) {
-	print $bond->print;
-}
-
-
-#@rings = find_rings($mol);
-#foreach $ring (@rings) {
-#	$ring->printf("%s - %n (%f). %a atoms, %b bonds; ","mass=%m; charge =%q; type=%t; id=%i");
-#
-#}
-
-
-write_gmx();
-
-
 
 sub write_gmx {
 	# Start writing topology file
