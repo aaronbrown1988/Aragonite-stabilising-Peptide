@@ -24,59 +24,12 @@ while ($line = readline(FRAC)) {
 	push(@atoms, $line);
 	
 }
-#screw || a
+
+#screw || c
 $atnum = @atoms;
 for($i = 0; $i < $atnum; $i++) {
 	$line = $atoms[$i];
 	@params = split(/\s+/, $line);
-	$params[0] =~ tr/a-z/A-Z/;
-	$sym = $params[0];
-	$sym =~ /(.).*/;
-	$sym = $1;
-	$x = $params[1];
-	$y = $params[2];
-	$z = $params[3];
-
-	# Screw axis parallel to b
-	$x += 0.5;# * $a;
-	$z = -1*$z;
-	$y = -1*$y;
-	$line = "$sym\t$x\t$y\t$z\n";
-	push(@atoms, $line);
-}
-# Screw || b
-#$atnum = @atoms;
-for($i = 0; $i < $atnum; $i++) {
-	$line = $atoms[$i];
-	@params = split(/\s+/, $line);
-	$params[0] =~ tr/a-z/A-Z/;
-	$sym = $params[0];
-	$sym =~ /(.).*/;
-	$sym = $1;
-	$x = $params[1];
-	$y = $params[2];
-	$z = $params[3];
-
-	# Screw axis parallel to b
-	$y += 0.5;# * $b;
-	$z = -1*$z;
-	$x = -1*$x;
-#
-	$line = "$sym\t$x\t$y\t$z\n";
-	push(@atoms, $line);
-}
-
-
-#screw || c
-
-#$atnum = @atoms;
-for($i = 0; $i < $atnum; $i++) {
-	$line = $atoms[$i];
-	@params = split(/\s+/, $line);
-	$params[0] =~ tr/a-z/A-Z/;
-	$sym = $params[0];
-	$sym =~ /(.).*/;
-	$sym = $1;
 	$x = $params[1];
 	$y = $params[2];
 	$z = $params[3];
@@ -86,19 +39,57 @@ for($i = 0; $i < $atnum; $i++) {
 	$y = -1*$y;
 	$x = -1*$x;
 
-	$line = "$sym\t$x\t$y\t$z\n";
+	$line = "$params[0]\t$x\t$y\t$z\n";
 	push(@atoms, $line);
 }
 
 
+# Screw || b
+$atnum = @atoms;
+for($i = 0; $i < $atnum; $i++) {
+	$line = $atoms[$i];
+	@params = split(/\s+/, $line);
+	$x = $params[1];
+	$y = $params[2];
+	$z = $params[3];
+
+	# Screw axis parallel to b
+	$y += 0.5;# * $b;
+	$z = -1*$z+1;
+	$x = -1*$x;
+#
+	$line = "$params[0]\t$x\t$y\t$z\n";
+#	push(@atoms, $line);
+}
+
+
+#screw || a
+$atnum = @atoms;
+for($i = 0; $i < $atnum; $i++) {
+	$line = $atoms[$i];
+	@params = split(/\s+/, $line);
+	$x = $params[1];
+	$y = $params[2];
+	$z = $params[3];
+
+	# Screw axis parallel to b
+	$x += 0.5;
+	$z = -1*$z+1;
+	$y = -1*$y+0.5;
+	$line = "$params[0]\t$x\t$y\t$z\n";
+#	push(@atoms, $line);
+}
 
 
 
-
-
-for ($i =0; $i < 4; $i++) {
-	for ($j = 0; $j < 2; $j++) {
-		for ($k = 0; $k < 2; $k++) {
+open(CHT, ">cht.pdb");
+$at = 0;
+$ch = 0;
+$res=0;
+for ($i =0; $i < 1; $i++) {
+	for ($j = 0; $j < 1; $j++) {
+		for ($k = 0; $k < 1; $k++) {
+			$coff = 0;
 			foreach $line (@atoms) {
 				@params = split(/\s+/, $line);
 				$params[0] =~ tr/a-z/A-Z/;
@@ -108,13 +99,17 @@ for ($i =0; $i < 4; $i++) {
 				$params[1] *=$a;
 				$params[2] *=$b;
 				$params[3] *=$c;
-				$x = $params[1];
-				$y = $params[2];
-				$z = $params[3];
 				$params[1] +=$i*$a;
 				$params[2] +=$j*$b;
 				$params[3] += $k*$c;
-				$mol->new_atom(symbol => $sym, type => $sym, name=>$params[0], coords => [$params[1], $params[2], $params[3]]);
+				if ($params[0] eq 'C1') {
+					$coff++;
+					$res++;
+				}
+				$at++;
+				
+				$mol->new_atom(symbol => $params[0], type => $params[0], name=>$params[0], coords => [$params[1], $params[2], $params[3]]);
+				printf("%-6s%5d%5s%1s%3s%1s%3d%1s%8.3f%8.3f%8.3f\n","ATOM", $at,$params[0],' ',"CHT",$ch+$coff,'a',$res,'b',$params[1], $params[2], $params[3]);
 			}
 		}
 	}
