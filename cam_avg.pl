@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # Loops over .camshift files and produces an average of them
-opendir(CUR, "$ARGV[0]");
+opendir(CUR, "$ARGV[0]") || die "Couldn't open dir $ARGV[0]\n";
 $res = $ARGV[1];
 for ($i = 0; $i <= $res; $i++) {
 	@ha[$i] = 0;
@@ -13,15 +13,18 @@ for ($i = 0; $i <= $res; $i++) {
 }
 $n  = 0;
 while ($file = readdir(CUR)) {
-	if ($file =~ /.*\.camshift/) {
-		open(IN, "$ARGV[0]/$file");
-		while ($line = readline($line)) {
+	if ($file =~ /.*camshift.*/) {
+		open(IN, "$ARGV[0]/$file")|| die "couldn't open $ARGV[0]/$file\n";
+		while ($line = readline(IN)) {
 			if ($line =~ /.*ID.*/) {
+			#	print $line;
 				last;
+				
 			}
 		}
 		$line = readline(IN);
 		while($line = readline(IN)) {
+		#	print $line;
 			$line =~ s/^\s+//;
 			@params = split(/\s+/, $line);
 			$ha[$params[0]] += $params[2];

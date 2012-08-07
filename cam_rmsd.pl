@@ -17,28 +17,45 @@ while($line = readline(SRC)) {
 }
 close(SRC);
 
-opendir(SHIFTS, "$ARGV[1]");
+opendir(SHIFTS, "$ARGV[1]") || die "couldn't open directory $ARGV[1]\n";
 $n =0;
 $RMSD1=0;
 $RMSD2 =0;
 while ($file = readdir(SHIFTS)) {
-	if ($file != /.*\.camshift/) {
+	if ($file !~ /.*\.camshift/) {
+	#	print "skipping $file\n";
 		next;
+
 	}
-	open(SRC, "$ARGV[1]/$file");
+#	print "#using $file\n";
+	open(SRC, "$ARGV[1]/$file") || die "couldn't open $ARGV[1]/$file\n" ;
 	while ($line = readline(SRC)) {
+			if ($line =~ /.*ID.*/) {
+				last;
+			}
+		}
+		$line = readline(IN);
+
+	while ($line = readline(SRC)) {
+		if (length($line) < 3 ) {
+			next;
+		}
 		$line =~ s/^\s+//;
-		$diff = $params[2] - $ha[1];
+		@params = split(/\s+/, $line);
+		$diff = $params[2] - $ha[$params[0]];
 		$diff = $diff **2;
 		$RMSD1 += $diff;
-		$diff = $params[4] - $hn[1];
+		$diff = $params[4] - $hn[$params[0]];
 		$diff = $diff **2;
 		$RMSD2 += $diff;
 		$n ++;
 	}
 	close(SRC);
 }
+#print "#$line\n";
+closedir(SHIFTS);
+#print "#RMSD1: $RMSD1 RMSD2: $RMSD2\n";
 $RMSD1 = sqrt($RMSD1/$n);
 $RMSD2 = sqrt($RMSD2/$n);
 
-print "RMSD HA: $RMSD1 HN: $RMSD2";
+print "RMSD HA: $RMSD1 HN: $RMSD2 calculated over $n shifts\n";
