@@ -77,8 +77,8 @@ sub atoms
 	print "Doing atoms: $line \n";
 	@params = split(/\s+/, $line);
 	print ATP "$params[2]\t$params[3]\n";
-	$mass{$params[2]} = $params[1];
-	$charge{$params[2]} = $params[3];
+	$mass{$params[2]} = $params[3];
+	$charge{$params[2]} = 0.0;
 	
 }
 
@@ -136,23 +136,25 @@ sub nb
 		
 	# Some magic numbers for the atomic number required by GMX.
 	# We infer this from the first letter of the atom type which generally specifies the element
-	if ($params[0] =~ /C.*/) {
+	if ($params[0] =~ /^C.*/) {
 		$atnum = 6;
 	}
-	if ($params[0] =~ /N.*/) {
+	if ($params[0] =~ /^N.*/) {
 		$atnum = 7;
 	}
-	if ($params[0] =~ /O.*/) {
+	if ($params[0] =~ /^O.*/) {
 		$atnum = 8;
 	}
-	if ($params[0] =~ /H.*/) {
+	if ($params[0] =~ /^H.*/) {
 		$atnum = 1;
 	}
-	if ($params[0] =~ /P.*/) {
+	if ($params[0] =~ /^P.*/) {
 		$atnum = 15;
 	}
-	if ($params[0] =~ /S.*/) {
+	if ($params[0] =~ /^S.*/) {
 		$atnum = 16;
 	}
-	print FFNBOND "$params[0]\t$atnum\t$mass{$params[0]}\t$charge{$params[0]}\tA\t$params[3]\t$params[2]\n";
+	$throw1=$mass{$params[0]};
+	$throw2=$charge{$params[0]};
+	print FFNBOND "$params[0]\t$atnum\t$throw1\t$throw2\tA\t$params[3]\t$params[2]\n";
 }
