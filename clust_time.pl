@@ -23,15 +23,16 @@ while ($line = readline(FH)) {
 		next;
 	}
 	($throw, $time, $curr) = split(/\s+/, $line);
+	$time *= 1000;
 	if (!existing($curr)) {
 		$clust ++;
-		$time *= 1000;
 		print OUT "\t$time\t$clust\n";
 		push (@times, $time);
 		push(@prev, $curr);
 	}
 }
 
+print OUT "\t$time\t$clust\n";
 sub existing {
 	local $find = shift;
 	local $found = 0;
