@@ -7,7 +7,7 @@
 #use Math::Vec;
 use Math::Vector::Real;
 
-$zlo = 0;
+$zlo = 10;
 $zhi = 30;
 $str = 0.1;
 $box = 1;
@@ -53,11 +53,13 @@ while(!eof(PDB)) {
 			@params = split(/\s+/, $lines[$j+2]);
 			$H2v = V($params[5], $params[6],$params[7]);
 	
-			$a = $H1v - $Ov;
-			$b = $H2v - $Ov;
-			$n = $a x $b;
+			$a = 0.5*($H2v - $H1v);
+			$a = $a + $H1v;
+			$b = $a - $Ov;
+			#$n = $a x $b;
 	
-			$dot = $n * V(0,0,1);
+			$dot = $b * V(0,0,1);
+			$dot = $dot/ abs($b);
 		#	print "$i\t$dot\n";
 			$adr[$i] += $dot;
 			$num[$i] ++;

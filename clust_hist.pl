@@ -31,10 +31,13 @@ close(INP);
 
 open(OUT, ">clust_size_hist.tsv") || die "couldn't open clust_size_hist for writing: $!\n";
 
-print OUT "#size\tcount\tNormalized\n";
+print OUT "#size\tNormalized\tCount\n";
 for($i=0; $i <= $total; $i++) {
-	$x = $hist[$i]/ $max;
-	print OUT "$i\t$hist[$i]\t$x\n";
+	$x = $hist[$i]/ $total;
+	if ($x == 0) {
+		#next;
+	}
+	print OUT "$i\t$x\t$hist[$i]\n";
 }
 
 

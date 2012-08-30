@@ -28,6 +28,7 @@ for i in {'0.25','0.4','0.5','0.6'}; do
 	#N=`grep Found cluster.log | awk '{print $2}'`
 	N=`grep 'Number of structures' cluster.log | sed -e 's/.* //'`
 	cat clust_size.tsv | awk -v n=$N '{ weight = $2 / n; print $1, weight}' >> clust_weights.tsv
+	~/src/utils/clust_hist.pl clust_size.tsv
 
 	
 	cd ..;
@@ -129,3 +130,20 @@ echo -e "1\n1\n" | g_hbond -f $XTC -s $TPR -dist hbdist.xvg -life hblife.xvg -ac
 
 cd ..
 
+
+
+
+mkdir cam
+cd cam
+echo -e "1\n" | trjconv -f $XTC -s $TPR -o ./trajout.pdb -pbc whole -dt 10
+mok '{$MOL->write("$i.pdb", format=>"pdb"); $i++;}BEGIN {$i=0}' trajout.pdb 
+rm trajout.pdb
+for i in `ls *.pdb`; do
+	camshift --data ~/local/share/camshift/data --pdb $i > $i.camshift
+done;
+~/src/utils/cam_avg.pl `pwd` 30 > camshift.tsv
+~/src/utils/cam_rmsd.pl ~/analysis/colino_HN_HA.tsv ./ > rmsd.log
+mkdir raw
+mv *.pdb.camshift *.pdb raw/
+
+cd ..

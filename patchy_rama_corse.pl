@@ -10,6 +10,7 @@ $r1 = 0;
 $r2 = 0;
 $r3 = 0;
 $other = 0;
+print "#Beta\talpha\tgamma\tother\n";
 while ($line = readline(FH)) {
 	if ($line =~ /^[#@].*/) {
 		next;

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 open(CMAP, "$ARGV[0]");
-$l = ($ARGV[3]+(($ARGV[4]-$ARGV[3])/$ARGV[2])*$ARGV[1])/$ARGV[4];
+$l = $ARGV[1]/$ARGV[2];
 print "scaling by $l\n";
 open(NEW, ">$ARGV[0].new");
 

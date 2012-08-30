@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 	ntypes = 1;
 	types[0] = malloc(sizeof(char)*2);
 	types[0] = "X";
-	l = (tl + i*dt)/th;
+	l = tl/th; //(tl + i*dt)/th;
 	sprintf(outname, "./%s.new", filename);
 	printf("Generating %s\n", outname);
 	out = fopen(outname, "w");
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 			fprintf(out,"%s",buffer);
 			continue;
 		}
-		fprintf(out,"%s",buffer);
+	//	fprintf(out,"%s",buffer);
 		sscanf(buffer, "%s %s  %d %lf %lf \n", type, res, &cgnr, &cA, &mA);
 		
 
@@ -174,11 +174,72 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (found == 2) {
-			mA = mA *l;
-			fprintf(out, "%sp\t%sp\t%d\t%3.2lf\t%lf\n", type, res,  cgnr, cA, mA);
+			//mA = mA *l;
+			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\n", type, res,  cgnr, cA, mA, cA, mA*l);
 			DEBUG printf("Matched bond %s %s\n", type, res);
+		} else {
+			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%3.2lf\n", type, res,  cgnr, cA, mA, cA, mA );
 		}
 	}
+
+
+
+
+	while(fgets(buffer,sizeof(buffer),bond)) {
+		fprintf(out, "%s", buffer);
+		if (strstr(buffer, "angletypes")) {
+			at = 1;
+			break;
+		}
+		
+	}
+
+	printf("..angles...");
+	while(at == 1 && (!feof(bond))) {
+		fgets(buffer,sizeof(buffer),bond);
+		if (strlen(buffer) < 3) {
+			at =0;
+			break;
+		}
+		if(buffer[0] == ';') {
+			fprintf(out,"%s",buffer);
+			continue;
+		}
+//		fprintf(out,"%s",buffer);
+		rv =0;
+		rv =  sscanf(buffer, "%s %s %s %d %lf %lf %lf %lf\n", type, res, atom, &cgnr, &cA, &mA, &cB, &mB);
+		/* horrificlly inefficient way to do this */
+		found = 0;
+		for (j =0; j < ntypes; j ++) {
+			if (strstr(types[j], type)) {
+				found++;
+				break;
+			}
+		}
+		for (j =0; j < ntypes; j ++) {
+			if (strstr(types[j], res)) {
+				found++;
+				break;
+			}
+		}
+		for (j =0; j < ntypes; j ++) {
+			if (strstr(types[j], atom)) {
+				found++;
+				break;
+			}
+		}
+		if (found == 3) {
+			fprintf(out, "%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\t%3.2lf\t%3.2lf\t%3.2lf\t%3.2lf\n", type, res, atom, cgnr, cA, mA, cB, mB, cA, mA *l, cB, mB*l);
+		} else {
+			fprintf(out, "%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%lf\t%lf ; untouched\n", type, res, atom, cgnr, cA, mA, cB,mB);
+		}
+		
+	}
+
+
+
+
+
 
 
 	while(fgets(buffer,sizeof(buffer),bond)) {
@@ -341,11 +402,11 @@ int main(int argc, char *argv[]) {
 			at =0;
 			break;
 		}
-		if(buffer[0] == ';') {
+		if(buffer[0] == ';'|| buffer[0] == '#') {
 			fprintf(out,"%s",buffer);
 			continue;
 			}
-		fprintf(out,"%s",buffer);
+		//fprintf(out,"%s",buffer);
 		sscanf(buffer, "%s %d %lf %lf %s %lf %lf \n", type, &cgnr, &mA, &cA, res , &sig, &eps);
 		found = 0;
 		for (j =0; j < ntypes; j ++) {
@@ -355,10 +416,12 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (found ==1) {
-			cA = cA * sqrt(l);
-			sig = sig * l;
-			eps = eps*l;
-			fprintf(out, "%sp\t%d\t%3.2lf\t%lf\t%s\t%lf\t%lf\n", type, cgnr, mA, cA, res, sig, eps);
+			//cA = cA * sqrt(l);
+			//sig = sig * l;
+			//eps = eps*l;
+			fprintf(out, "%s\t%d\t%3.2lf\t%lf\t%s\t%lf\t%lf\t%lf\t%lf\t%lf\n", type, cgnr, mA, cA, res, sig, eps, cA*sqrt(l), sig*l, eps*l);
+		} else {
+			fprintf(out, "%s\t%d\t%3.2lf\t%lf\t%s\t%lf\t%lf\n", type, cgnr, mA, cA, res, sig, eps);
 		}
 
 	}	
@@ -380,11 +443,11 @@ int main(int argc, char *argv[]) {
 			at =0;
 			break;
 		}
-		if(buffer[0] == ';') {
+		if(buffer[0] == ';' || buffer[0] == '#') {
 			fprintf(out,"%s",buffer);
 			continue;
 			}
-		fprintf(out,"%s",buffer);
+	//	fprintf(out,"%s",buffer);
 		sscanf(buffer, "%s %s %d %lf %lf \n", type, res, &nr , &sig, &eps);
 		found = 0;
 		for (j =0; j < ntypes; j ++) {
@@ -400,9 +463,11 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (found ==2) {
-			sig = sig * l;
-			eps = eps*l;
-			fprintf(out, "%sp\t%sp\t%d\t%3.2lf\t%lf\n", type, res, nr, sig, eps);
+//			sig = sig * l;
+//			eps = eps*l;
+			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\n", type, res, nr, sig, eps, sig *l , eps *l);
+		} else {
+			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%lf\n", type, res, nr, sig, eps);
 		}
 
 	}	
@@ -428,7 +493,7 @@ int main(int argc, char *argv[]) {
 		fgets(buffer,sizeof(buffer),bond);
 		fprintf(out, "%s", buffer);		
 	}
-	
+	l = i/n;
 	fprintf(out, "free-energy = yes\n");
 	fprintf(out, "init_lambda=%3.2lf\n", l);
 	fprintf(out, "delta_lambda = 0\n");
