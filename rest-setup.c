@@ -100,9 +100,7 @@ int main(int argc, char *argv[]) {
 
 		cB = cA * sqrt(l);
 		mB = mA;
-		//fprintf(out, "%d\t%s\t%d\t%s\t%s\t%d\t%lf\t%lf\tp%s\t%lf\t%lf\n", nr, type, resnr, res, atom, cgnr, cA, mA, type, cB, mB);
-//		fprintf(out, "%d\t%s\t%d\t%s\t%s\t%d\t%lf\t%lf\t%sp\t%lf\t%lf\n", nr, type, resnr, res, atom, cgnr, cA, mA, type, cB, mB);
-		fprintf(out, "%d\t%s\t%d\t%s\t%s\t%d\t%lf\t%lf\t%s\t%lf\t%lf\n", nr, type, resnr, res, atom, cgnr, cA, mA, type, cB, mB);
+		fprintf(out, "%d\t%s\t%d\t%s\t%s\t%d\t%lf\t%lf\tb%s\t%lf\t%lf\n", nr, type, resnr, res, atom, cgnr, cA, mA, type, cB, mB);
 	}
 		fgets(buffer,sizeof(buffer),in);
 	while(!feof(in)) {
@@ -155,7 +153,7 @@ int main(int argc, char *argv[]) {
 			fprintf(out,"%s",buffer);
 			continue;
 		}
-	//	fprintf(out,"%s",buffer);
+		fprintf(out,"%s",buffer);
 		sscanf(buffer, "%s %s  %d %lf %lf \n", type, res, &cgnr, &cA, &mA);
 		
 
@@ -175,10 +173,8 @@ int main(int argc, char *argv[]) {
 		}
 		if (found == 2) {
 			//mA = mA *l;
-			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\n", type, res,  cgnr, cA, mA, cA, mA*l);
+			fprintf(out, "b%s\tb%s\t%d\t%3.2lf\t%lf\n", type, res,  cgnr, cA, mA*l);
 			DEBUG printf("Matched bond %s %s\n", type, res);
-		} else {
-			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%3.2lf\n", type, res,  cgnr, cA, mA, cA, mA );
 		}
 	}
 
@@ -205,7 +201,7 @@ int main(int argc, char *argv[]) {
 			fprintf(out,"%s",buffer);
 			continue;
 		}
-//		fprintf(out,"%s",buffer);
+		fprintf(out,"%s",buffer);
 		rv =0;
 		rv =  sscanf(buffer, "%s %s %s %d %lf %lf %lf %lf\n", type, res, atom, &cgnr, &cA, &mA, &cB, &mB);
 		/* horrificlly inefficient way to do this */
@@ -229,9 +225,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (found == 3) {
-			fprintf(out, "%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\t%3.2lf\t%3.2lf\t%3.2lf\t%3.2lf\n", type, res, atom, cgnr, cA, mA, cB, mB, cA, mA *l, cB, mB*l);
-		} else {
-			fprintf(out, "%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%lf\t%lf ; untouched\n", type, res, atom, cgnr, cA, mA, cB,mB);
+			fprintf(out, "b%s\tb%s\tb%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\n", type, res, atom, cgnr,  cA, mA *l, cB, mB*l);
 		}
 		
 	}
@@ -243,11 +237,11 @@ int main(int argc, char *argv[]) {
 
 
 	while(fgets(buffer,sizeof(buffer),bond)) {
-		fprintf(out, "%s", buffer);
 		if (strstr(buffer, "dihedraltypes")) {
 			at = 1;
 			break;
 		}
+		fprintf(out, "%s", buffer);
 		
 	}
 
@@ -293,31 +287,15 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (found == 4) {
-		/*	mA = mA *l;
-			if (strstr(type,"X") && strstr(tmp, "X")  ) {
-				fprintf(out, "%s\t%sp\t%sp\t%s\t%d\t%3.2lf\t%lf\t%d\n", type, res, atom, tmp, cgnr, cA, mA, nr);
-			}else if (strstr(res,"X") && strstr(atom, "X")  ) {
-				fprintf(out, "%sp\t%s\t%s\t%sp\t%d\t%3.2lf\t%lf\n", type, res, atom, tmp, cgnr, cA, mA);
-			} else if (cgnr == 2) {
-				fprintf(out, "%sp\t%sp\t%sp\t%sp\t%d\t%3.2lf\t%lf\n", type, res, atom, tmp, cgnr, cA, mA);
-			} else {
-				fprintf(out, "%sp\t%sp\t%sp\t%sp\t%d\t%3.2lf\t%lf\t%d\n", type, res, atom, tmp, cgnr, cA, mA, nr);
-			}
-//			printf("Matched Dihedral %s %s %s %s\n", type, res,atom, tmp); */
+			if(!strstr(tmp, "X")) strcat(tmp,"b");
+			if(!strstr(atom, "X")) strcat(atom,"b");
+			if(!strstr(res, "X")) strcat(res,"b");
+			if(!strstr(type, "X")) strcat(type,"b");
 			if(cgnr == 2) {
-				fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\n", type, res, atom, tmp, cgnr, cA, mA,  cA, mA *l);
-				//fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%d\t%3.2lf\t%3.2lf\n", type, res, atom, tmp, cgnr, cA, mA, cgnr, cA, mA *l);
+//				fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf\n", type, res, atom, tmp, cgnr, cA, mA *l);
 			} else {
-				//fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%d\t%d\t%3.2lf\t%3.2lf\t%d\n", type, res, atom, tmp, cgnr, cA, mA, nr, cgnr,cA,mA * l,nr);
-				fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%d\t%3.2lf\t%3.2lf\t%d\n", type, res, atom, tmp, cgnr, cA, mA, nr, cA,mA * l,nr);
+//				fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%d\n", type, res, atom, tmp, cgnr, cA,mA * l,nr);
 			}	
-		} else {
-			if(cgnr == 2) {
-
-				fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf ; untouched\n", type, res, atom, tmp, cgnr, cA, mA);
-			} else {
-				fprintf(out, "%s\t%s\t%s\t%s\t%d\t%3.2lf\t%lf\t%d ; untouched\n", type, res, atom, tmp, cgnr, cA, mA, nr);
-			}
 		}
 		
 	}
@@ -340,11 +318,11 @@ int main(int argc, char *argv[]) {
 		fprintf(out, "%s",buffer);
 	
 	} */
-	printf("..other bits..");
-	while(!feof(bond)) {
-		fgets(buffer,sizeof(buffer),bond);
-		fprintf(out, "%s", buffer);		
-	}
+//	printf("..other bits..");
+//	while(!feof(bond)) {
+///		fgets(buffer,sizeof(buffer),bond);
+///		fprintf(out, "%s", buffer);		
+//	}
 	fclose(out);
 	fclose(bond);
 	printf("done!\n");
@@ -406,7 +384,7 @@ int main(int argc, char *argv[]) {
 			fprintf(out,"%s",buffer);
 			continue;
 			}
-		//fprintf(out,"%s",buffer);
+		fprintf(out,"%s",buffer);
 		sscanf(buffer, "%s %d %lf %lf %s %lf %lf \n", type, &cgnr, &mA, &cA, res , &sig, &eps);
 		found = 0;
 		for (j =0; j < ntypes; j ++) {
@@ -419,9 +397,7 @@ int main(int argc, char *argv[]) {
 			//cA = cA * sqrt(l);
 			//sig = sig * l;
 			//eps = eps*l;
-			fprintf(out, "%s\t%d\t%3.2lf\t%lf\t%s\t%lf\t%lf\t%lf\t%lf\t%lf\n", type, cgnr, mA, cA, res, sig, eps, cA*sqrt(l), sig*l, eps*l);
-		} else {
-			fprintf(out, "%s\t%d\t%3.2lf\t%lf\t%s\t%lf\t%lf\n", type, cgnr, mA, cA, res, sig, eps);
+			fprintf(out, "b%s\t%d\t%3.2lf\t%lf\t%s\t%lf\t%lf\n", type, cgnr, mA, cA*sqrt(l), res,  sig, eps*l);
 		}
 
 	}	
@@ -447,7 +423,7 @@ int main(int argc, char *argv[]) {
 			fprintf(out,"%s",buffer);
 			continue;
 			}
-	//	fprintf(out,"%s",buffer);
+		fprintf(out,"%s",buffer);
 		sscanf(buffer, "%s %s %d %lf %lf \n", type, res, &nr , &sig, &eps);
 		found = 0;
 		for (j =0; j < ntypes; j ++) {
@@ -465,9 +441,7 @@ int main(int argc, char *argv[]) {
 		if (found ==2) {
 //			sig = sig * l;
 //			eps = eps*l;
-			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%lf\t%3.2lf\t%3.2lf\n", type, res, nr, sig, eps, sig *l , eps *l);
-		} else {
-			fprintf(out, "%s\t%s\t%d\t%3.2lf\t%lf\n", type, res, nr, sig, eps);
+			fprintf(out, "b%s\tb%s\t%d\t%3.2lf\t%lf\n", type, res, nr, sig , eps *l);
 		}
 
 	}	
