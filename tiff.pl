@@ -1,13 +1,12 @@
 #!/usr/bin/perl
 open(TOP, $ARGV[1]);
 open(GMX, $ARGV[0]);
-open(OUT, ">$ARGV[1].tiff");
+open(OUT, ">peptide.itp");
+open(NB, "ffnonbonded.itp");
+open(NBOUT, ">ffnonbonded.rest.itp");
 
 # Scaling factor!
 $l = $ARGV[2]/$ARGV[3];
-
-
-
 
 
 # Lets parse the GMXDUMP
@@ -117,6 +116,47 @@ while ($line = readline(GMX)) {
 }
 
 
+$nc = 0;
+while ($line = readline(GMX)) {
+	$line =~ s/^\s+//;
+	if ($line =~ /.*:.*/) {
+		$line = readline(GMX);
+		$line = readline(GMX);
+		last;
+	}
+	@params = split(/\s+/, $line);
+	$params[1] =~ s/.+=//;
+	$cmap[$params[0]][0] = $params[1];
+	$cmap[$params[0]][1] = ++$params[3];
+	$cmap[$params[0]][2] = ++$params[4];
+	$cmap[$params[0]][3] = ++$params[5];
+	$cmap[$params[0]][4] = ++$params[6];
+	$cmap[$params[0]][5] = ++$params[7];
+	$nc++;
+
+}
+
+
+
+
+$np =0;
+while ($line = readline (GMX)) {
+	$line =~ s/^\s+//;
+	if ($line =~ /.*:.*/) {
+		$line = readline(GMX);
+		$line = readline(GMX);
+		last;
+	}
+	@params = split(/\s+/, $line);
+	$params[1] =~ s/.+=//;
+	$pair[$params[0]][0] = $params[1];
+	$pair[$params[0]][1] = ++$params[3];
+	$pair[$params[0]][2] = ++$params[4];
+	$np++;
+
+}
+	
+
 
 if ($ARGV[4] == 1) {
 	# Fix UB
@@ -140,17 +180,24 @@ if ($ARGV[4] == 1) {
 	}
 $fix = 1;
 }
+
+
 			
 
 #####  Write stuffs!
 
-#Bonds
+#Write header ot Tiff's partial itp file
+
 while ($line = readline(TOP)) {
-	print OUT $line;
-	if ($line =~ /.*bond.*/) {
-		last;
-	}
+		print OUT $line;
+
+
+
 }
+#Bonds
+
+print OUT "\n\n[ bonds ]\n";
+
 for($i = 0; $i < $nb; $i++) {
 	$line = $functype[$bonds[$i][0]];
 	$line =~ s/^\s+//;
@@ -164,17 +211,19 @@ for($i = 0; $i < $nb; $i++) {
 	
 }
 
+print OUT "\n[ pairs ]\n";
+for ($i = 0; $i < $np; $i++){
+	$line = $functype[$pair[$i][0]];
+	chomp($line);
+	$line =~ s/^\s+//;
+	$line =~ s/[A-z0-9]+=//g;
+	$line =~ s/[A-Z_]+,\s*//;
+	$line =~ s/LJ14,\s*//;
+	@params = split(/,\s*/, $line);
+	$params[3] *= $l;
+	print OUT "$pair[$i][1]\t$pair[$i][2]\t1\n";#\t@params\n";	
+}
 
-#Before we get ahead of ourselves copy the 1-4s - These are auto generated and scaled by GMX itself.
-while($line = readline(TOP)) {
-	if ($line =~ /.*pairs.*/) {
-		last;
-	}
-}
-while (length($line) > 3) {
-	print OUT $line;
-	$line = readline(TOP);
-}
 
 
 #Angles
@@ -225,13 +274,48 @@ for($i = 0; $i < $ni; $i++) {
 	
 }
 
-# Probably best to write the tail end of the file (CMAP onwards)
-while( $line = readline(TOP)) {
-	if ($line =~ /.*cmap.*/) {
-		print OUT $line;
+
+
+
+# ffnonbonded.itp
+while ($line = readline(NB)) {
+	if ($line !~ /[\[;]/) {
 		last;
 	}
+	print NBOUT $line;
 }
-while($line = readline(TOP)) {
-	print OUT $line;
+while (length($line) > 3) {
+	if ($line =~ /^[#;]/) {
+		print NBOUT $line;
+		$line = readline (NB);
+		next;
+	}
+	@params = split(/\s+/,$line);
+	$params[0] = "$params[0]b";
+	$params[3] *= sqrt($l);
+	$params[6] *= $l;
+	print NBOUT $line;
+	print NBOUT "@params\n";
+	$line = readline(NB);
 }
+while ($line = readline(NB)) {
+	if ($line !~ /[\[;]/) {
+		last;
+	}
+	print NBOUT $line;
+}
+while (length($line) > 3) {
+	if ($line =~ /^[#;]/) {
+		print NBOUT $line;
+		$line = readline (NB);
+		next;
+	}
+	@params = split(/\s+/,$line);
+	$params[0] = "$params[0]b";
+	$params[1] = "$params[1]b";
+	$params[4] *= $l;
+	print NBOUT $line;
+	print NBOUT "@params\n";
+	$line = readline (NB);
+}
+	

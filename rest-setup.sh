@@ -29,10 +29,10 @@ for i in {0..1}; do
 
 	gmxdump -s topol.tpr > gmxdump.log;
 	
-	../tiff.pl gmxdump.log snap.top 300 500 0
+	~/src/utils/tiff.pl gmxdump.log snap.top 300 500 0
 	mv snap.top.tiff snap.top
 
-	../rest-setup snap.top $i 15 300 500 || exit 
+	~/src/utils/rest-setup snap.top $i 15 300 500 || exit 
 	~/src/utils/cmap.pl ./charmm27.ff/cmap.itp 300 500
 ##	exit
 	mv snap.top.new snap.top
