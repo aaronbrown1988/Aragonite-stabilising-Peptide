@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 
 		cB = cA * sqrt(l);
 		mB = mA;
-		fprintf(out, "%d\t%s\t%d\t%s\t%s\t%d\t%lf\t%lf\tb%s\t%lf\t%lf\n", nr, type, resnr, res, atom, cgnr, cA, mA, type, cB, mB);
+		fprintf(out, "%d\t%s\t%d\t%s\t%s\t%d\t%lf\t%lf\t%sb\t%lf\t%lf\n", nr, type, resnr, res, atom, cgnr, cA, mA, type, cB, mB);
 	}
 		fgets(buffer,sizeof(buffer),in);
 	while(!feof(in)) {
