@@ -274,6 +274,12 @@ for($i = 0; $i < $ni; $i++) {
 	
 }
 
+print OUT "\n[ cmap ]\n";
+
+for($i = 0; $i < $nc; $i++) {
+	print OUT "$cmap[$i][1]\t$cmap[$i][2]\t$cmap[$i][3]\t$cmap[$i][4]\t$cmap[$i][5]\t1\n";
+	
+}
 
 
 
