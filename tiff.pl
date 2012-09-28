@@ -147,6 +147,9 @@ while ($line = readline (GMX)) {
 		$line = readline(GMX);
 		last;
 	}
+	if ($line =~ /.*grp.*/) {
+		last;
+	}
 	@params = split(/\s+/, $line);
 	$params[1] =~ s/.+=//;
 	$pair[$params[0]][0] = $params[1];
