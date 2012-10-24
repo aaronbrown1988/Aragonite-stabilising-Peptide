@@ -33,8 +33,14 @@ for($i = 0; $i < $atnum; $i++) {
 	# Screw axis parallel to c
 	$z += 0.5;# * $c;
 	$y = -1*$y;
-	$x = -1*$x;
-
+	$x = -1*$x+0.5;
+	if ($x< -1) { $x += 1;}
+	if ($y< -1) { $y += 1;}
+	if ($z< -1) { $z += 1;}
+	if ($x> 1) { $x -= 1;}
+	if ($y> 1) { $y -= 1;}
+	if ($z> 1) { $z -= 1;}
+#
 	$line = "$params[0]\t$x\t$y\t$z\n";
 	push(@atoms, $line);
 }
@@ -51,11 +57,17 @@ for($i = 0; $i < $atnum; $i++) {
 
 	# Screw axis parallel to b
 	$y += 0.5;# * $b;
-	$z = -1*$z+1;
+	$z = -1*$z+0.5;
 	$x = -1*$x;
-#
+	if ($x< -1) { $x += 1;}
+	if ($y< -1) { $y += 1;}
+	if ($z< -1) { $z += 1;}
+	if ($x> 1) { $x -= 1;}
+	if ($y> 1) { $y -= 1;}
+	if ($z> 1) { $z -= 1;}
+##
 	$line = "$params[0]\t$x\t$y\t$z\n";
-#	push(@atoms, $line);
+	push(@atoms, $line);
 }
 
 
@@ -70,10 +82,16 @@ for($i = 0; $i < $atnum; $i++) {
 
 	# Screw axis parallel to b
 	$x += 0.5;
-	$z = -1*$z+1;
+	$z = -1*$z;
 	$y = -1*$y+0.5;
+	if ($x< -1) { $x += 1;}
+	if ($y< -1) { $y += 1;}
+	if ($z< -1) { $z += 1;}
+	if ($x> 1) { $x -= 1;}
+	if ($y> 1) { $y -= 1;}
+	if ($z> 1) { $z -= 1;}
 	$line = "$params[0]\t$x\t$y\t$z\n";
-#	push(@atoms, $line);
+	push(@atoms, $line);
 }
 
 
@@ -91,8 +109,10 @@ $params[1] *=$a;
 $params[2] *=$b;
 $params[3] *=$c;
 $params[3] += -1*$c;
-$mol->new_atom(symbol => 'O4', type => 'O4', name=>'O4', coords => [$params[1], $params[2], $params[3]]);
-for ($k = 0; $k < 5; $k++) {
+#$mol->new_atom(symbol => 'O4', type => 'O4', name=>'O4', coords => [$params[1], $params[2], $params[3]]);
+for ($k = 0; $k < 2; $k++) {
+for ($j = 0; $j < 2; $j++) {
+for ($i = 0; $i < 2; $i++) {
 	$coff = 0;
 	foreach $line (@atoms) {
 		@params = split(/\s+/, $line);
@@ -104,6 +124,8 @@ for ($k = 0; $k < 5; $k++) {
 		$params[2] *=$b;
 		$params[3] *=$c;
 		$params[3] += $k*$c;
+		$params[2] += $j*$b;
+		$params[1] += $i*$a;
 		if ($params[0] eq 'C1') {
 			$coff++;
 			$res++;
@@ -112,6 +134,8 @@ for ($k = 0; $k < 5; $k++) {
 		
 		$mol->new_atom(symbol => $params[0], type => $params[0], name=>$params[0], coords => [$params[1], $params[2], $params[3]]);
 	}
+}
+}
 }
 
 
