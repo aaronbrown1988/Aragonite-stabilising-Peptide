@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use POSIX;
-use Chemistry::Mol;
-use Chemistry::File::PDB;
+
 
 my @neg;
 my @pos;
@@ -10,36 +9,54 @@ my @pos;
 opendir(DH, $ARGV[0]) || die "couldn't open $ARGV[0]: $!\n";
 
 while ($file = readdir(DH)) {
-        if ($file !~ /.*pdb/) {
-                next;
-        }
-        $mol = Chemistry::MOl->read($file);
-        if (@neg < 1 ) {
-                #find atoms were after atoms 
-                @atoms = $mol->atoms;
-                for ($i=0; $i < @atoms; $i++) {
-                        $at = $mol->by_id($atoms[$i]);
-                        if ($at->name() eq 'CA' && ($at->res() eq 'ASP' || $at->res eq 'GLU')) {
-                        push(@neg, $atoms[$i]);
-                        }
-                        if ($at->name() eq 'CA' && ($at->res() eq 'ARG' || $at->res eq 'LYS')) {
-                        push(@pos, $atoms[$i]);
-                        }
-                }
-        }
-        for($i = 0; $i < @neg ; $i++) {
-                for ($j = 0; $j < @pos; $j++ ) {
-                        $at = $mol->by_id($atoms[$i]);
-                        $at2 = $mol->by_id($atoms[$j]);
-                        @coords = $at->coord();
-			@coords2 = $at2->coord();
-			$dist = ($coords[0] - $coords2[0])**2;
-			$dist += ($coords[0] - $coords2[0])**2;
-			$dist += ($coords[0] - $coords2[0])**2;
-			$dist = sqrt($dist);
-			$id = $i * @pos + $j;
-			$dists[$id] = $dist;
-		}
+    if ($file !~ /.*pdb/) {
+        next;
+    }
+	if ($file =~ /.*pdb.+/){
+		next;
 	}
-	print "$file\t@dists\n";
+    $step = $file;
+    $step =~ s/\.pdb//;
+    print "$step";
+	open(FH, "$ARGV[0]/$file") || die  "couldn't open $file,: $!\n";
+	@pairs = qw();
+    while ($line = readline(FH)) {
+        $line =~ s/^\s+//;
+        @params = split(/\s+/, $line);
+		if($params[2] eq "CA" && ($params[3] eq "ASP" || $params[3] eq "GLU")) {
+            $pos = tell(FH);
+            while($line = readline(FH)) {
+                @params2 = split(/\s+/, $line);
+                if ($params2[2] eq "CA" && ($params2[3] eq "ARG" || $params2[3] eq "LYS" || $params2[3] eq "HIS")) {
+                    $dist = ($params[5] - $params2[5])**2;
+                    $dist += ($params[6] - $params2[6])**2;
+                    $dist += ($params[7] - $params2[7])**2;
+                    $dist = sqrt($dist);
+                    print "\t$dist";
+					$pair = "$params[4]-$params2[4]";
+					push(@pairs,$pair);
+				}
+			}
+			seek(FH, $pos, 0);
+		}
+		if($params[2] eq "CA" && ($params[3] eq "ARG" || $params[3] eq "LYS" ||$params[3] eq "HIS")) {
+			$pos = tell(FH);
+			while($line = readline(FH)) {
+				@params2 = split(/\s+/, $line);
+				if ($params2[2] eq "CA" && ($params2[3] eq "ASP" || $params2[3] eq "GLU" )) {
+					$dist = ($params[5] - $params2[5])**2;
+					$dist += ($params[6] - $params2[6])**2;
+					$dist += ($params[7] - $params2[7])**2;
+					$dist = sqrt($dist);
+					print "\t$dist";
+					$pair = "$params[3]$params[4]-$params2[3]$params2[4]";
+					push(@pairs,$pair);
+				}
+			}
+			seek(FH, $pos, 0);
+		}
+			
+	}
+	print "\n# step @pairs\n";
+	#exit;
 }
