@@ -57,6 +57,16 @@ while ($file = readdir(DH)) {
 		}
 			
 	}
-	print "\n# step @pairs\n";
+	#print "\n# step @pairs\n";
 	#exit;
+}
+for ($i = 0; $i < @pairs; $i++) {
+	print "\@ s$i legend \"$pairs[$i]\"\n";
+	print "\@ s$i hidden false\n";
+	print "\@ s$i on\n";
+	
+	
+}
+for ($i = 0; $i < @pairs; $i++) {
+	print "\@ sort s$i X ascending\n";
 }
