@@ -33,7 +33,7 @@ while ($file = readdir(DH)) {
                     $dist += ($params[7] - $params2[7])**2;
                     $dist = sqrt($dist);
                     print "\t$dist";
-					$pair = "$params[4]-$params2[4]";
+					$pair = "$params[3]$params[4]-$params2[3]$params2[4]";
 					push(@pairs,$pair);
 				}
 			}
@@ -57,6 +57,7 @@ while ($file = readdir(DH)) {
 		}
 			
 	}
+	print "\n";
 	#print "\n# step @pairs\n";
 	#exit;
 }
