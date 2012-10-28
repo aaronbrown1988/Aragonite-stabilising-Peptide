@@ -130,9 +130,10 @@ sub nb
 		return;
 	}
 	$params[2] *= -1;
-	$params[2] *= $kj * (2**(5/6));
+	$params[2] *= $kj ;#* (2**(5/6));
 	$params[3] /= 10;
-	$params[3] *= 2;
+	$params[3] /= (2**(1/6));
+	#$params[3] *= 2;
 		
 	# Some magic numbers for the atomic number required by GMX.
 	# We infer this from the first letter of the atom type which generally specifies the element
