@@ -1,10 +1,14 @@
 #!/bin/bash
 
-XTC=/media/EXTERNAL/brown/rest-feb/0/trajout.xtc 
-TPR=/media/EXTERNAL/brown/rest-feb/0/tpxout.tpr 
+#XTC=/media/EXTERNAL/brown/rest-feb/0/trajout.xtc 
+#TPR=/media/EXTERNAL/brown/rest-feb/0/tpxout.tpr 
 JSE=/home/brown/analysis/n16n_best.pdb
 
-cd ~/analysis/rest-feb/
+XTC=`echo $1`
+TPR=`echo $2`
+
+
+#cd ~/analysis/rest-feb/
 
 DATE=`date +%y%m%d`
 
@@ -40,7 +44,7 @@ cd ..
 mkdir ramas
 cd ramas
 
-for i in {1..82} ; do
+for i in {1..40} ; do
 j=$[$i-1]
 
 k=$[$i*500]
@@ -113,15 +117,6 @@ echo -e "4\n4\n" | g_rms -s $JSE -f $XTC -o traj_rmsd.xvg -dt 10
 cd ..
 
 
-mkdir trj
-cd trj
-
-cat /media/EXTERNAL/brown/rest-feb/0/md.log /media/EXTERNAL/brown/rest-feb/0/md.part00*.log >> md.log
-
-demux.pl md.log 
-
- 
-cd ..
 
 mkdir hbond
 cd hbond
@@ -146,4 +141,10 @@ done;
 mkdir raw
 mv *.pdb.camshift *.pdb raw/
 
+cd ..
+
+mkdir trj
+cd trj
+~/src/utils/charge_dist.pl ../cam/raw > charge_dist.dat
+~/src/utils/ring_distance.pl ../cam/raw> ing_dist.dat
 cd ..
