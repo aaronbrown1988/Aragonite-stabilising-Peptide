@@ -16,14 +16,14 @@ while ($file = readdir(DH)) {
 	@pairs = qw();
 	while($line = readline(FH)) {
 		@params = split(/\s+/, $line);
-		if ($params[3] eq "PHE" || $params[3] eq "TYR" ||$params[3] eq "TRP" || $params[3] eq "PRO" ||$params[3] eq "ILE" || $params[3] eq "GLY") {
+		if ($params[3] eq "PHE" || $params[3] eq "TYR" ||$params[3] eq "TRP"  ||$params[3] eq "ILE") { # || $params[3] eq "GLY") {
 			#Found an aromatic/ aliphatic residue.
 			@coords = find_center($line);
 			#	print "$params[3]-$params[4] : @coords\n";
 			$pos_new = tell(FH);
 			while ($line = readline(FH)) {
 				@params2 = split(/\s+/, $line);
-				if ($params2[3] eq "PHE" || $params2[3] eq "TYR" ||$params2[3] eq "TRP" || $params2[3] eq "PRO" ||$params2[3] eq "ILE" || $params2[3] eq "GLY") {
+				if ($params2[3] eq "PHE" || $params2[3] eq "TYR" ||$params2[3] eq "TRP"  ||$params2[3] eq "ILE" ) {#|| $params2[3] eq "GLY") {
 					@coords2 = find_center($line);
 					#	print "$params2[3]-$params2[4] : @coords2\n";
 					$dist = ($coords[0] - $coords2[0])**2;
