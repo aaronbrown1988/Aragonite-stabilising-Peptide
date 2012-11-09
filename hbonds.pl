@@ -17,7 +17,7 @@ while ($file = readdir(DH)) {
 	}
 }
 closedir(DH);
-
+bond_data();
 
 print <<END;
 @ s0 legend "# bonds"
@@ -121,7 +121,7 @@ sub process
 				next;
 			}
 			push(@pairs, "$A[1]  $B[1]");
-
+			$bonds[@pairs-1] = 0;
 			$dist = ($A[5] - $B[5])**2;
 			$dist += ($A[6] - $B[6])**2;
 			$dist += ($A[7] - $B[7])**2;
@@ -203,13 +203,13 @@ sub bond_data
 	}
 
 	for ($i = 0; $i < @pairs; $i++) {
-		print "\@ s$i legend \"$pairs[$i]\"\n";
-		print "\@ s$i hidden true\n";
-		print "\@ s$i off\n";
+		print BD "\@ s$i legend \"$pairs[$i]\"\n";
+		print BD "\@ s$i hidden true\n";
+		print BD "\@ s$i off\n";
 				
 	}
 	for ($i = 0; $i < @pairs; $i++) {
 		$new = @pairs +$i;
-		print "\@ sort s$i X ascending\n";
+		print BD "\@ sort s$i X ascending\n";
 	}
 }
