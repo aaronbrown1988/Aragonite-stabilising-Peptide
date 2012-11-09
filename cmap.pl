@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+#
+# Script for scaling the CMAP terms. Currently unused due to 
+# GMX 4.5.5 not reading them in or caring about the
+# The B states. :(
+#
 
 open(CMAP, "$ARGV[0]");
 $l = $ARGV[1]/$ARGV[2];

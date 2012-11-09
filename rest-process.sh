@@ -25,7 +25,7 @@ for i in {'0.25','0.4','0.5','0.6'}; do
 
 	echo -e "4\n1\n" |  g_cluster -f $XTC -s  $TPR -g cluster.log -clid clust-id.xvg -cl clusters.pdb -dt 10 -method gromos -cutoff $i -minstruct 1
 
-	bash ~/src/utils/cluster_post.sh
+	bash ~/src/utils/cluster_post.sh 11
 	~/src/utils/clust_criteria.pl clust-id.xvg
 	~/src/utils/clust_time.pl clust-id.xvg
 	cat cluster.log | awk '{print $1,$3}' | sed -e 's/.*|//g' | sort -n | uniq | grep -P '^[0-9].*' >> clust_size.tsv

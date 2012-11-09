@@ -9,6 +9,9 @@
 $cur_type = 0;
 my %mass;
 my %charge;
+my %eps14;
+my %sig14;
+
 # conversion factor
 $kj = 4.184;
 
@@ -67,6 +70,11 @@ while($line = readline(PRM)) {
 
 close(ATP);
 close(FFBOND);
+
+
+nb14();
+
+
 close(FFNBOND);
 
 
@@ -122,7 +130,7 @@ sub imp
 
 sub nb
 {
-	# I have knowingly ignored 1-4 interactions
+	# I have knowingly ignored 1-4 interactions - Not any more AHB 2/11/12
 	print "Doing nonbonded: $line \n";
 	@params = split(/\s+/, $line);
 	if ($params[2] > 0 ) {
@@ -130,11 +138,26 @@ sub nb
 		return;
 	}
 	$params[2] *= -1;
-	$params[2] *= $kj ;#* (2**(5/6));
-	$params[3] /= 10;
-	$params[3] /= (2**(1/6));
-	#$params[3] *= 2;
-		
+	$params[2] *= $kj ; # Convert to Kjmol-1 from Kcalmol-1
+	$params[3] /= 10; # convert A to nm
+	$params[3] = $params[3]/(2**(1/6));
+	$params[3] *= 2;
+	
+	
+	#1-4's
+	$params[5] *= -1;
+	$params[5] *= $kj;
+	$params[6] /= 10;
+	$params[6] = $params[5]/ (2**(1/6));
+	#$params[6] *= 2;
+	
+	if ($params[5] != /.*[A-Za-z].*/) {
+		push(@lj14, $params[0]);
+		$eps14{$params[0]} = $params[5];
+		$sig14{$params[0]} = $params[6];
+	}
+	
+	
 	# Some magic numbers for the atomic number required by GMX.
 	# We infer this from the first letter of the atom type which generally specifies the element
 	if ($params[0] =~ /^C.*/) {
@@ -158,4 +181,17 @@ sub nb
 	$throw1=$mass{$params[0]};
 	$throw2=$charge{$params[0]};
 	print FFNBOND "$params[0]\t$atnum\t$throw1\t$throw2\tA\t$params[3]\t$params[2]\n";
+}
+
+
+sub nb14
+{
+	print FFNBOND "\n\n[ pairtypes ]\n";
+	for($i = 0; $i< @lj14; $i++) {
+		for ($j = $i; $j < @lj14; $j++) {
+			$eps = sqrt ( $eps14{$lj14[$i]} * $eps14{$lj14[$j]});
+			$sig = $sig14{$lj14[$i]} + $sig14{$lj14[$j]};
+			print FFNBOND " $lj14[$i]\t$lj14[$j]\t1\t$sig\t$eps\n";
+		}
+	}
 }
