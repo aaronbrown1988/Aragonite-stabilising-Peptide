@@ -3,7 +3,7 @@
 # Finds h bonds. Takes a folder of pdb's as the argument.
 #
 use Math::Trig;
-@atypes=qw(C N O F);
+@atypes=qw(N O F);
 my @pairs = qw();
 my @bonds = qw();
 $folder = $ARGV[0];
