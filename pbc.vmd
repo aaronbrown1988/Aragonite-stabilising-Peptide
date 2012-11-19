@@ -1,0 +1,15 @@
+set nf [molinfo top get numframes]
+set outfile [open "pbc.tsv" w]
+animate goto start
+set sel [atomselect top "all"]
+
+for {set i 0} {$i < $nf} {incr i} {
+	$sel frame $i
+	animate goto $i	
+	set box [pbc get]
+	pbc get
+	puts $outfile "$i $box"
+	
+}
+close $outfile
+

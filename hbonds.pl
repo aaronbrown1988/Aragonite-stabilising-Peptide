@@ -62,7 +62,7 @@ sub process
 	for ($i = 0; $i < @peptide; $i++) {
 		$line = $peptide[$i];
 		@params = split (/\s+/, $line);
-		if ($params[2] !~ /^[CFON].*/) {
+		if ($params[2] !~ /^[FON].*/) {
 			#Give up if not the right type;
 			next;
 		}
@@ -163,7 +163,7 @@ sub process
 					next;
 				}
 				#print "$A[1] $C[1] $B[1] $theta\n";
-				@bonds[@pairs-1] = 1;
+				@bonds[@pairs-1] = -1;
 				$nbonds++;
 				
 				#Classification
@@ -204,8 +204,9 @@ sub bond_data
 
 	for ($i = 0; $i < @pairs; $i++) {
 		print BD "\@ s$i legend \"$pairs[$i]\"\n";
-		print BD "\@ s$i hidden true\n";
-		print BD "\@ s$i off\n";
+		print BD "\@ s$i hidden false\n";
+		print BD "\@ s$i on\n";
+		print BD "\@ s$i symbol 1\n";
 				
 	}
 	for ($i = 0; $i < @pairs; $i++) {
