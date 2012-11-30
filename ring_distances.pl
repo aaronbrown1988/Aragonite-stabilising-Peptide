@@ -42,6 +42,7 @@ while ($file = readdir(DH)) {
 	}
 	print "\n";
 	#print "\n# $step @pairs\n";
+#exit;
 	
 }
 for ($i = 0; $i < @pairs; $i++) {
@@ -92,7 +93,7 @@ sub find_center
 	$y /= $n;
 	$z /= $n;
 	@ret = ($x,$y,$z);
-	#print "DEBUG: found $n compatible atoms, @ret == $x $y $z\n";
+#	print "DEBUG: found $n compatible atoms, @ret == $x $y $z\n";
 	return(@ret);
 	
 	
