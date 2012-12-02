@@ -3,16 +3,16 @@
 # Finds h bonds. Takes a folder of pdb's as the argument.
 #
 use Math::Trig;
-@atypes=qw(N O F);
 my @pairs = qw();
 my @bonds = qw();
+my $npairs=-1;
 $folder = $ARGV[0];
 opendir(DH, "$ARGV[0]") || die "couldn't open $ARGV[0]: $!\n";
 open(BD, ">Bond_data.dat");
 while ($file = readdir(DH)) {
 	if ($file =~ /.*\.pdb/ && $file !~ /.pdb.+/) {
 		process();
-		#last;
+#		last;
 		#exit;
 	}
 }
@@ -75,17 +75,10 @@ sub process
 			@params2 = split(/\s+/,$line);
 			if ($params2[4] != $curRes) {
 				last;
-			} elsif ($params2[2] !~ /^H.*/) {
-				next;
+			} elsif ($params2[2] !~ /^H[HNTZE123].*/) {
+				last;
 			}
 			#Calculate the distance to the H
-			$dist = ($params[5] - $params2[5])**2;
-			$dist += ($params[6] - $params2[6])**2;
-			$dist += ($params[7] - $params2[7])**2;
-			$dist = sqrt($dist);
-			if ($dist > 1.1) {
-				next;
-			} 
 			# If we get here were a hydrogen associated with the Heavy found above.
 			if ($isdonor == 0) {
 				push(@donor, "$i");
@@ -99,13 +92,11 @@ sub process
 			}
 				
 		}
-		if ($isdonor == 0) {
-			push(@accept, "$i");
-		}
+		push(@accept, "$i");
 
 	}
 
-	#print "D:@donor\nA:@accept\nH:@donorH\n";
+#	print "D:@donor\nA:@accept\nH:@donorH\n";
 	#loop through donors
 	$nbonds = 0;
 	$scsc = 0;
@@ -120,7 +111,7 @@ sub process
 			if ($A[4] == $B[4]) {
 				next;
 			}
-			push(@pairs, "$A[1]  $B[1]");
+			push(@pairs, "$A[3]$A[4]:$A[2]  $B[3]$B[4]:$B[2]");
 			$bonds[@pairs-1] = 0;
 			$dist = ($A[5] - $B[5])**2;
 			$dist += ($A[6] - $B[6])**2;
@@ -191,6 +182,14 @@ sub process
 		}
 	}
 	$file =~ s/\.pdb//;
+	 $npairs = ($npairs==-1)? scalar(@pairs): $npairs;
+
+	$throw = scalar(@pairs);
+#	print "$throw =? $npairs\n";
+	 if ($npairs != scalar(@pairs)) {
+		 die "had $npairs now have $throw\n";
+	 }
+		
 	print "$file\t$nbonds\t$bb\t$scsc\t$scb\n";
 	print BD "$file\t@bonds\n";
 	

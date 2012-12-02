@@ -14,3 +14,4 @@ rest-setup.o
 rest-setup.sh~
 
 *.sh#
+*.swp
