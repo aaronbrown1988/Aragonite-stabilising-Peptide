@@ -19,11 +19,16 @@ for i in `ls $A/*.pdb`;  do
 	 if [ $iname == "clusters" ]; then
 	 	continue;
 	fi
-
+	if [ $iname -gt 4 ]; then
+		continue;
+	fi
 	 for j in `ls $B/*.pdb`; do
 	 	jname=`echo $j | sed -e 's/.pdb.*//; s/.*\///g;'`
 	 	if [ $jname == "clusters" ]; then
 	 		continue;
+		fi
+		if [ $jname -gt 4 ]; then
+			continue;
 		fi
 #	 	echo "#iname:$iname jname:$jname from $i and $j" >> rmsd.tsv
 	 	echo -e "4\n4\n" | g_rms -s "$i" -f "$j";

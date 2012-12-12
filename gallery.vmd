@@ -1,19 +1,23 @@
 mol default style {Ribbons 0.3 10 2}
-mol new /Users/aaronbrown/n16n_best.pdb
+#mol new /Users/aaronbrown/n16n_best.pdb
 mol modstyle 0 0 {Ribbons 0.3 10 2 }
 mol modcolor 0 0  {ColorID 4}
+mol addrep 0
+mol modstyle 1 0 {VdW 1.0 12}
+mol modselect 1 0 "serial == 1 || serial == 507"	
 set sel1 [atomselect 0 "backbone && residue < 29"]
 scale by 2
-for {set i 0} {$i < 10} {incr i} {
+for {set i 0} {$i < 4} {incr i} {
 	set j [expr {$i+1}]
-	mol new $i.pdb
+#	mol new $i.pdb
+	mol modstyle 0 $j {Ribbons 0.3 10 2}	
 	set sel0 [atomselect $j "backbone && residue <29"]
 	set M [measure fit $sel1 $sel0]
 	[atomselect 0  all ] move $M
 	mol addrep $j 
 	mol modstyle 1 $j {VdW 1.0 12}
 	mol modselect 1 $j "serial == 1 || serial == 511"	
-	render PostScript $i.ps
+#	render PostScript $i.ps
 	mol off $j
 
 }
