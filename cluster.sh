@@ -11,5 +11,6 @@ while [[ $end -le $time ]]; do
 	echo -e "4\n1\n" | g_cluster -f $XTC -s $TPR -method gromos -e $end -o $name.log -dist $name-dist.xvg -clid $name-id.xvg -cutoff $CUTOFF -cl $name.pdb 2>&1 > $name-my.log
 	n=`fgrep Found $name.log | awk ' {print $2};'`
 	echo "$end $n" >> clust_time.tsv
+	end=$[$end+10000];
 done
 
