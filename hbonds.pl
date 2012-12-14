@@ -17,7 +17,7 @@ while ($file = readdir(DH)) {
 	}
 }
 closedir(DH);
-bond_data();
+#bond_data();
 
 print <<END;
 @ s0 legend "# bonds"
@@ -104,6 +104,7 @@ sub process
 	$scb = 0;
 	@pairs = qw();
 	@bonds = qw();
+	print BD "$file"; 
 	for ($i = 0; $i < @donor; $i ++ ) {
 		for ($j = 0; $j < @accept; $j ++ ) {
 			@A = split(/\s+/, $peptide[$donor[$i]]);
@@ -157,23 +158,25 @@ sub process
 				@bonds[@pairs-1] = -1;
 				$nbonds++;
 				
+				
 				#Classification
-				if ($A[2] =~ /{CA|N|C|O}/) {
+				if ($A[2] =~ /(CA|N|C|O)\b/) {
 					#Backbone;
-					if($B[2] =~ /{CA|N|C|O}/) {
+					if($B[2] =~ /(CA|N|C|O)\b/) {
 						$bb ++;
 						
 					} else {
 						$scb ++;
 					}
 				} else {
-					if($B[2] =~ /{CA|N|C|O}/) {
+					if($B[2] =~ /\b(CA|N|C|O)\b/) {
 						$scb ++;
 						
 					} else {
 						$scsc ++;
 					}
 				}
+				print BD ",$A[3]$A[4]:$A[2]-$B[3]$B[4]:$B[2]";
 
 			}
 
@@ -191,7 +194,7 @@ sub process
 	 }
 		
 	print "$file\t$nbonds\t$bb\t$scsc\t$scb\n";
-	print BD "$file\t@bonds\n";
+	print BD "\n";
 	
 }
 
