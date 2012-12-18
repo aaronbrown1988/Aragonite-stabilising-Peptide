@@ -78,7 +78,7 @@ sub find_center
 			$y += $par[6];
 			$z += $par[7];
 			$n++;
-		} elsif (($par[3] eq "ILE" || $par[3] eq "GLY") && ($par[2] =~ /.*C[BA]*.*/)) {
+		} elsif (($par[3] eq "GLY") && ($par[2] =~ /.*N*.*/)) {
 			$x += $par[5];
 			$y += $par[6];
 			$z += $par[7];
