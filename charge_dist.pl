@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 use POSIX;
-
+$bx = 1e99;
+$by = 1e99;
+$bz = 1e99;
 
 my @neg;
 my @pos;
@@ -20,6 +22,17 @@ while ($file = readdir(DH)) {
     print "$step";
 	open(FH, "$ARGV[0]/$file") || die  "couldn't open $file,: $!\n";
 	@pairs = qw();
+	while ($line = readline(FH)) {
+	if ($line =~ /CRYST1.*/) {
+		@params = split(/\s+/,$line);
+		$bx = @params[1]/2;
+		$by = @params[2]/2;
+		$bz = @params[3]/2;
+#	print "#Found PBC's $bx $by $bz\n";
+		last;
+		}
+	}
+	seek(FH, 0, 0);
     while ($line = readline(FH)) {
         $line =~ s/^\s+//;
         @params = split(/\s+/, $line);
@@ -28,9 +41,17 @@ while ($file = readdir(DH)) {
             while($line = readline(FH)) {
                 @params2 = split(/\s+/, $line);
                 if (($params2[2] eq "C" || $params[2] eq "CZ") && ($params2[3] eq "ARG" || $params2[3] eq "LYS" || $params2[3] eq "HIS") && $params2[4] != ($params[4]+1)) {
-                    $dist = ($params[5] - $params2[5])**2;
-                    $dist += ($params[6] - $params2[6])**2;
-                    $dist += ($params[7] - $params2[7])**2;
+                    $dx = ($params[5] - $params2[5]);
+                    $dy = ($params[6] - $params2[6]);
+                    $dy = ($params[7] - $params2[7]);
+
+		    $dx = ($dx**2 > $bx**2)? (abs($dx)-(2*$bx)):$dx;
+		    $dy = ($dy**2 > $by**2)? (abs($dy)-(2*$by)):$dy;
+	            $dz = ($dz**2 > $bz**2)? (abs($dz)-(2*$bz)):$dz;
+			$dist = ($dx)**2;
+			$dist += ($dy)**2;
+			$dist += ($dz)**2;
+
                     $dist = sqrt($dist);
                     print "\t$dist";
 					$pair = "$params[3]$params[4]-$params2[3]$params2[4]";

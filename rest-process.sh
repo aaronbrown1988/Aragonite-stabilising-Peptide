@@ -121,23 +121,25 @@ cd ..
 
 mkdir cam
 cd cam
-echo -e "1\n1\n" | trjconv -f $XTC -s $TPR -o ./trajout.pdb -pbc whole  -center -dt 10
-mok '{$MOL->write("$i.pdb", format=>"pdb"); $i++;}BEGIN {$i=0}' trajout.pdb 
-rm trajout.pdb
+mkdir raw
+cd raw
+echo -e "1\n1\n" | trjconv -f $XTC -s $TPR -o .pdb -pbc whole  -center -sep -dt 10
+#mok '{$MOL->write("$i.pdb", format=>"pdb"); $i++;}BEGIN {$i=0}' trajout.pdb 
 for i in `ls *.pdb`; do
+	sed -e 's/ [AB] /   /' $i > $i.new;
+	mv $i.new $i;
 	camshift --data ~/local/share/camshift/data --pdb $i > $i.camshift
 done;
-~/src/utils/cam_avg.pl `pwd` 30 > camshift.tsv
-~/src/utils/cam_rmsd.pl ~/analysis/colino_HN_HA.tsv ./ > rmsd.log
-mkdir raw
-mv *.pdb.camshift *.pdb raw/
+~/src/utils/cam_avg.pl `pwd` 30 > ../camshift.tsv
+~/src/utils/cam_rmsd.pl ~/analysis/colino_HN_HA.tsv ./ > ../rmsd.log
+cd ..
 
 cd ..
 
 mkdir hbond
 cd hbond
 
-echo -e "1\n1\n" | g_hbond -f $XTC -s $TPR -dist hbdist.xvg -life hblife.xvg -ac hbac.xvg  -num hbnum.xvg -g hb.log 
+#echo -e "1\n1\n" | g_hbond -f $XTC -s $TPR -dist hbdist.xvg -life hblife.xvg -ac hbac.xvg  -num hbnum.xvg -g hb.log 
 perl ~/src/utils/hbonds.pl ../cam/raw > HB.xvg
 
 cd ..
