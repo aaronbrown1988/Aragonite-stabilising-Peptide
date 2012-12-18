@@ -5,20 +5,27 @@
 use Math::Trig;
 my @pairs = qw();
 my @bonds = qw();
+my @summary = qw();
 my $npairs=-1;
 $folder = $ARGV[0];
 opendir(DH, "$ARGV[0]") || die "couldn't open $ARGV[0]: $!\n";
 open(BD, ">Bond_data.dat");
 while ($file = readdir(DH)) {
 	if ($file =~ /.*\.pdb/ && $file !~ /.pdb.+/) {
-		process();
+		push(@files,$file);
+	}
+}
+@files = sort { $a <=> $b } @files;
+for($I=0; $I < @files; $I++) {
+		$file = $files[$I];
+		process($file);
+		if ($file >=  100) { last;}
 #		last;
 		#exit;
-	}
 }
 closedir(DH);
 #bond_data();
-
+bond_sum();
 print <<END;
 @ s0 legend "# bonds"
 @ s0 hidden flase
@@ -49,6 +56,7 @@ sub process
 	my @donor = qw();
 	my @donorH = qw();
 	my @peptide = qw();
+	my $file = shift;
 	open(FH, "$folder/$file") || die "couldn't open $folder/$file :$!\n";
 	while($line = readline(FH)) {
 		if ($line !~ /.*ATOM.*/) {
@@ -156,6 +164,7 @@ sub process
 				}
 				#print "$A[1] $C[1] $B[1] $theta\n";
 				@bonds[@pairs-1] = -1;
+				$summary[@pairs-1]++;
 				$nbonds++;
 				
 				
@@ -216,3 +225,24 @@ sub bond_data
 		print BD "\@ sort s$i X ascending\n";
 	}
 }
+
+sub bond_sum
+{
+	open (BS, ">HB_sum.txt") || die "Couldn't open HB_sum for writing\n";
+	printf BS "%10s\t%10s\t%10s\t%10s\n", "Atom1","Atom2","Occurance","% of frames";
+	print BS "--------------------------------------------------------------------------\n";
+	my %sum;
+	for ($i = 0; $i < @pairs; $i++) {
+		$sum{$pairs[$i]} = $summary[$i];
+	}
+	@pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
+	for ($i = 0; $i < @pairs; $i++) {
+		$line = $pairs[$i];#$sum{$summary[$i]};
+		@params = split(/\s+/, $line);
+		$percent = $sum{$pairs[$i]} / $file;
+		printf BS "%10s\t%10s\t%10s\%3.2f\n", $params[0],$params[1],$sum{$pairs[$i]}, $percent;
+
+	}
+	close(BS);
+}
+
