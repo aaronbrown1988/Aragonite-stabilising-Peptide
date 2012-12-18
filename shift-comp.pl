@@ -25,6 +25,7 @@ $rms_ha =0;
 $rms_hn = 0;
 $rms_tot = 0;
 $n =0;
+print "#Cluster\tHA\tHN\t combined\n";
 while ($line = readline(CS)) {
 	$nmr = readline(NMR);
 	@nmr_val = split(/,/, $nmr);
