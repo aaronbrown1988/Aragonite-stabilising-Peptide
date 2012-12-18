@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Usage rep_simple confout.gro
-# This script takes a gro file, rplicates it in the C/Z direction and outputs an xyz.
+# This script takes a gro file, rplicates it in each direction and outputs an xyz.
 # This was to aid in debugging the chitin slab
 #
 
@@ -17,7 +17,7 @@ open(OUT, ">out.xyz");
 $line = readline(FH);
 $line = readline(FH);
 chomp($line);
-$line *= 2;
+$line *= 4;
 print OUT "$line\n";
 print OUT "ALpha Chitin\n";
 while($line = readline(FH)) {
@@ -28,6 +28,12 @@ while($line = readline(FH)) {
 	$params[4] *= 10;
 	$params[5] *= 10;
 	print OUT "$params[1] $params[3] $params[4] $params[5]\n";
+	$params[3] += ($dim[0]*10);
+	print OUT "$params[1] $params[3] $params[4] $params[5]\n";
+	$params[3] -= ($dim[0]*10);
+	$params[4] += ($dim[1]*10);
+	print OUT "$params[1] $params[3] $params[4] $params[5]\n";
+	$params[4] -= ($dim[1]*10);
 	$params[5] += ($dim[2]*10);
 	print OUT "$params[1] $params[3] $params[4] $params[5]\n";
 
