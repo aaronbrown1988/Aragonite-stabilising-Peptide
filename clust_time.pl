@@ -26,10 +26,10 @@ while ($line = readline(FH)) {
 	$time *= 1000;
 	if (!existing($curr)) {
 		$clust ++;
-		print OUT "\t$time\t$clust\n";
 		push (@times, $time);
 		push(@prev, $curr);
 	}
+	print OUT "\t$time\t$clust\n";
 }
 
 print OUT "\t$time\t$clust\n";
