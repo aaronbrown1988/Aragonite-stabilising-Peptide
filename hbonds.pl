@@ -26,6 +26,9 @@ for($I=0; $I < @files; $I++) {
 closedir(DH);
 #bond_data();
 bond_sum();
+BB_sum();
+SCSC_sum();
+SCB_sum();
 print <<END;
 @ s0 legend "# bonds"
 @ s0 hidden flase
@@ -178,7 +181,7 @@ sub process
 						$scb ++;
 					}
 				} else {
-					if($B[2] =~ /\b(CA|N|C|O)\b/) {
+					if($B[2] =~ /(CA|N|C|O)\b/) {
 						$scb ++;
 						
 					} else {
@@ -239,10 +242,97 @@ sub bond_sum
 	for ($i = 0; $i < @pairs; $i++) {
 		$line = $pairs[$i];#$sum{$summary[$i]};
 		@params = split(/\s+/, $line);
-		$percent = $sum{$pairs[$i]} / $file;
-		printf BS "%10s\t%10s\t%10s\%3.2f\n", $params[0],$params[1],$sum{$pairs[$i]}, $percent;
+		$percent = $sum{$pairs[$i]} / scalar(@files);
+		printf BS "%10s\t%10s\t%10s\t\%3.2f\n", $params[0],$params[1],$sum{$pairs[$i]}, $percent;
 
 	}
 	close(BS);
 }
 
+sub BB_sum
+{
+
+	open(BB, ">BB.tsv") || die "Couldn't open BB.txt\n";
+	printf BB "#%10s\t%10s\t%10s\n", "Atom1","Atom2","Occurance";
+	print BB "#--------------------------------------------------------------------------\n";
+	my @BB_pairs;
+	my %sum;
+	for ($i = 0; $i < @pairs; $i++) {
+		@params = split(/[: -]+/, $pairs[$i]);
+		if ($params[1] =~ /(CA|N|C|O)\b/ && $params[3] =~ /(CA|C|N|O)\b/) {
+			$sum{"$params[0] $params[2]"} += $summary[$i];
+			push(@BB_pairs, "$params[0] $params[2]");
+		}
+
+	}
+
+
+
+	@BB_pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
+	for ($i = 0; $i < @BB_pairs; $i++) {
+		$line = $BB_pairs[$i];#$sum{$summary[$i]};
+		@params = split(/\s+/, $line);
+		printf BB "%10s\t%10s\t%10s\n", $params[0],$params[1],$sum{$BB_pairs[$i]} ;
+
+	}
+	close(BB);
+
+}
+sub SCSC_sum
+{
+
+	open(SCSC, ">SCSC.tsv") || die "Couldn't open SCSC.txt\n";
+	printf SCSC "#%10s\t%10s\t%10s\n", "Atom1","Atom2","Occurance";
+	print SCSC "#--------------------------------------------------------------------------\n";
+	my @SCSC_pairs;
+	my %sum;
+	for ($i = 0; $i < @pairs; $i++) {
+		@params = split(/[: -]+/, $pairs[$i]);
+		if ($params[1] !~ /(CA|N|C|O)\b/ && $params[3] !~ /(CA|C|N|O)\b/) {
+			$sum{"$params[0] $params[2]"} += $summary[$i];
+			push(@SCSC_pairs, "$params[0] $params[2]");
+		}
+
+	}
+
+
+
+	@SCSC_pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
+	for ($i = 0; $i < @SCSC_pairs; $i++) {
+		$line = $SCSC_pairs[$i];#$sum{$summary[$i]};
+		@params = split(/\s+/, $line);
+		printf SCSC "%10s\t%10s\t%10s\n", $params[0],$params[1],$sum{$SCSC_pairs[$i]};
+
+	}
+	close(SCSC);
+
+}
+sub SCB_sum
+{
+
+	open(SCB, ">SCB.tsv") || die "Couldn't open SCB.txt\n";
+	printf SCB "#%10s\t%10s\t%10s\n", "Atom1","Atom2","Occurance";
+	print SCB "#--------------------------------------------------------------------------\n";
+	my @SCB_pairs;
+	my %sum;
+	for ($i = 0; $i < @pairs; $i++) {
+		@params = split(/[: -]+/, $pairs[$i]);
+		if ($params[1] =~ /(CA|N|C|O)\b/ || $params[3] =~ /(CA|C|N|O)\b/) {
+			$sum{"$params[0] $params[2]"} += $summary[$i];
+			push(@SCB_pairs, "$params[0] $params[2]");
+		}
+
+	}
+
+
+
+	@SCB_pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
+	for ($i = 0; $i < @SCB_pairs; $i++) {
+		$line = $SCB_pairs[$i];#$sum{$summary[$i]};
+		@params = split(/\s+/, $line);
+		printf SCB "%10s\t%10s\t%10s\n", $params[0],$params[1],$sum{$SCB_pairs[$i]};
+
+	}
+	close(SCB);
+
+}
