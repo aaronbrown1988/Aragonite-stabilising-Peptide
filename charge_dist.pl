@@ -28,7 +28,7 @@ while ($file = readdir(DH)) {
 		$bx = @params[1]/2;
 		$by = @params[2]/2;
 		$bz = @params[3]/2;
-#	print "#Found PBC's $bx $by $bz\n";
+		#print "#Found PBC's $bx $by $bz\n";
 		last;
 		}
 	}
@@ -40,18 +40,18 @@ while ($file = readdir(DH)) {
             $pos = tell(FH);
             while($line = readline(FH)) {
                 @params2 = split(/\s+/, $line);
-		if((($params2[2] eq "C" && $params2[3] eq "ARG" ) || ( $params2[3] eq "LYS" &&  $params2[2] eq "NZ")) ){#&& $params2[4] != ($params[4]+1)) { 
+		if((($params2[2] eq "CZ" && $params2[3] eq "ARG" ) || ( $params2[3] eq "LYS" &&  $params2[2] eq "NZ")) ){#&& $params2[4] != ($params[4]+1)) { 
                     $dx = ($params[5] - $params2[5]);
                     $dy = ($params[6] - $params2[6]);
-                    $dy = ($params[7] - $params2[7]);
-
-		    $dx = ($dx**2 > $bx**2)? (abs($dx)-(2*$bx)):$dx;
-		    $dy = ($dy**2 > $by**2)? (abs($dy)-(2*$by)):$dy;
-	            $dz = ($dz**2 > $bz**2)? (abs($dz)-(2*$bz)):$dz;
+					$dz= ($params[7] - $params2[7]);
+			#print "#dx: $dx dy: $dy dz: $dz\n";
+			$dx = ($dx**2 > $bx**2)? (abs($dx)-(2*$bx)):$dx;
+			$dy = ($dy**2 > $by**2)? (abs($dy)-(2*$by)):$dy;
+			$dz = ($dz**2 > $bz**2)? (abs($dz)-(2*$bz)):$dz;
 			$dist = ($dx)**2;
 			$dist += ($dy)**2;
 			$dist += ($dz)**2;
-
+			
                     $dist = sqrt($dist);
                     print "\t$dist";
 					$pair = "$params[3]$params[4]-$params2[3]$params2[4]";
@@ -60,15 +60,21 @@ while ($file = readdir(DH)) {
 			}
 			seek(FH, $pos, 0);
 		}
-		if(($params[2] eq "C" && $params[3] eq "ARG" ) || ( $params[3] eq "LYS" &&  $params[2] eq "NZ") ) {
+		if(($params[2] eq "CZ" && $params[3] eq "ARG" ) || ( $params[3] eq "LYS" &&  $params[2] eq "NZ") ) {
 			$pos = tell(FH);
 			while($line = readline(FH)) {
 				@params2 = split(/\s+/, $line);
 				if ($params2[2] eq "CG" && ($params2[3] eq "ASP" || $params2[3] eq "GLU" ) ){#&& $params2[4] != ($params[4] +1)) {
-					$dist = ($params[5] - $params2[5])**2;
-					$dist += ($params[6] - $params2[6])**2;
-					$dist += ($params[7] - $params2[7])**2;
-					$dist = sqrt($dist);
+					$dx = ($params[5] - $params2[5]);
+                    $dy = ($params[6] - $params2[6]);
+					$dz= ($params[7] - $params2[7]);
+					#print "#dx: $dx dy: $dy dz: $dz\n";
+					$dx = ($dx**2 > $bx**2)? (abs($dx)-(2*$bx)):$dx;
+					$dy = ($dy**2 > $by**2)? (abs($dy)-(2*$by)):$dy;
+					$dz = ($dz**2 > $bz**2)? (abs($dz)-(2*$bz)):$dz;
+					$dist = ($dx)**2;
+					$dist += ($dy)**2;
+					$dist += ($dz)**2;
 					print "\t$dist";
 					$pair = "$params[3]$params[4]-$params2[3]$params2[4]";
 					push(@pairs,$pair);
