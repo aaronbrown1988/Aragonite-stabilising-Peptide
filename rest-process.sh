@@ -150,4 +150,5 @@ mkdir trj
 cd trj
 ~/src/utils/charge_dist.pl ../cam/raw > charge_dist.dat
 ~/src/utils/ring_distances.pl ../cam/raw> ring_dist.dat
+~/src/utils/ss_plot.pl ../cam/raaw > ss.xvg
 cd ..
