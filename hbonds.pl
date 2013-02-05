@@ -19,7 +19,7 @@ while ($file = readdir(DH)) {
 for($I=0; $I < @files; $I++) {
 		$file = $files[$I];
 		process($file);
-		if ($file >=  100) { last;}
+	#		if ($file >=  100) { last;}
 #		last;
 		#exit;
 }
