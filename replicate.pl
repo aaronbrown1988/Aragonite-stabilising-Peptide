@@ -11,9 +11,12 @@ $iCurRes = 1;
 $curRes = 1;
 $curChain = 1;
 $curAt = 1;
+$nr = -1;
 $xrep = $ARGV[1];
 $yrep = $ARGV[2];
 $zrep = $ARGV[3];
+$alt = $ARGV[4];
+
 
 my $a,$b,$c;
 
@@ -39,11 +42,13 @@ if ($line =~ /.*CRYST.*/) {
 while ($line = readline(UNIT)) {
 	@params = split(/\s+/, $line);
 	if ($params[4] == $iCurChain ) {
+		$nr = $params[5];
 		push(@buf,$line);
 	} else {
-		print "$params[4]!=$iCurChain: line $line";
-		$iCurChain = $params[4];
+		print "$params[4]!=$iCurChain: nr: $nr   line $line";
 		rep();
+		@params = split(/\s+/, $line);
+		$iCurChain = $params[4];
 		@buf = qw();
 		push(@buf, $line);
 		#$curChain++;
@@ -54,13 +59,31 @@ while ($line = readline(UNIT)) {
 
 sub rep
 {
+	print " iCurChain: $iCurChain ALT:$alt\n";
+	if ($alt == 1 && ((-1)** $iCurChain) > 0 ) {
+		$curRes--;
+	}
 	for ($i = 0; $i < $xrep; $i++) {
 		for ($j = 0; $j < $yrep; $j++) {
+			if ($alt == 1 && ((-1)** $iCurChain) < 0 ) {
+				$curRes += ($nr * $zrep) ;
+				print " iCurChain: $iCurChain\n";
+#				$curRes = 1;
+			}
 			for ($k =0; $k < $zrep; $k++ ) {
 				for($l = 0; $l < @buf; $l++ ) {
+					if ($alt == 1 && (((-1)** $iCurChain)< 0)) {
+					@params  = split(/\s+/, $buf[scalar(@buf)-1-$l]);
+					} else {
 					@params  = split(/\s+/, $buf[$l]);
+					}
 					$params[4] = $curChain;
-					if ($params[5] != $iCurRes) {
+					if ($alt == 1 && (((-1)** $iCurChain)< 0) && $params[5] != $iCurRes) {
+						$curRes--;
+#						$curRes++;
+						$iCurRes = $params[5];
+							
+					}elsif ($params[5] != $iCurRes) {
 						$curRes++;
 						$iCurRes = $params[5];
 					}
@@ -74,12 +97,16 @@ sub rep
 					printf REP "%-6s%5d%4s  %-3s %.1s%4d %11.3f%8.3f%8.3f%6.2f%6.2f %4s %2s %2s\n", $params[0],$params[1],$params[2],$params[3],$params[4],$params[5],$params[6],$params[7],$params[8],$params[9],$params[10],$params[11],$params[12],$params[13],$params[14],"","",$params[15];
 				}
 			}
+			if ($alt == 1 && ((-1)** $iCurChain) < 0 ) {
+				$curRes += (($nr * $zrep) );
+				
+			}
 			$curChain++;
 			if ($curChain eq "10") {
 				$curChain = "A";
 			}
 		#	$curRes = 1;
-			$curRes++;
+		#	$curRes++;
 			$iCurRes =1;
 		}
 	}
