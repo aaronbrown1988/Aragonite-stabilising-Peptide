@@ -7,10 +7,14 @@
 #use Math::Vec;
 use Math::Vector::Real;
 
-$zlo = 10;
-$zhi = 30;
+$zlo = $ARGV[2];
+$zhi = $ARGV[3];
+$axis = $ARGV[4] + 4;
+
+print "# going from $zlo to $zhi in $axis\n";
+
 $str = 0.1;
-$box = 1;
+$box = 5;
 
 # ARGS pdb slab_end 
 open(PDB, "$ARGV[0]");
@@ -43,7 +47,7 @@ while(!eof(PDB)) {
 	#	print "$z:\n";
 		for ($j = 0; $j < $l; $j += 3) {
 			@params = split(/\s+/, $lines[$j]);
-			if ($params[7] < ($zlo +$i*$str) || $params[7] > ($zlo +$i*$str+$box)) {
+			if ($params[$axis] < ($zlo +$i*$str) || $params[$axis] > ($zlo +$i*$str+$box)) {
 				next;
 			}
 		#	print $Ov,"\n";
