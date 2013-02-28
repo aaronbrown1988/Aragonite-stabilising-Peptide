@@ -101,6 +101,9 @@ sub rep
 				$curRes += (($nr * $zrep) );
 				
 			}
+			if ($alt != 1) {
+				$curRes++;
+			}
 			$curChain++;
 			if ($curChain eq "10") {
 				$curChain = "A";
