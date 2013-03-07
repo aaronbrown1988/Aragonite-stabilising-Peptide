@@ -7,9 +7,11 @@ mol modstyle 1 0 {VdW 1.0 12}
 mol modselect 1 0 "serial == 1 || serial == 507"	
 set sel1 [atomselect 0 "backbone && residue < 29"]
 scale by 2
-for {set i 0} {$i < 4} {incr i} {
+mol off all
+for {set i -1} {$i < 4} {incr i} {
 	set j [expr {$i+1}]
 #	mol new $i.pdb
+	mol on $j
 	mol modstyle 0 $j {Ribbons 0.3 10 2}	
 	set sel0 [atomselect $j "backbone && residue <29"]
 	set M [measure fit $sel1 $sel0]
@@ -17,7 +19,7 @@ for {set i 0} {$i < 4} {incr i} {
 	mol addrep $j 
 	mol modstyle 1 $j {VdW 1.0 12}
 	mol modselect 1 $j "serial == 1 || serial == 511"	
-#	render PostScript $i.ps
+	render snapshot gallery_$i.tga
 	mol off $j
 
 }
