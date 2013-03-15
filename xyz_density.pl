@@ -3,93 +3,123 @@
 # Density Calulator
 #
 #
+# USAGE RAW SLAB_bounds direction
+# direction = 1,2,3
 
-use Fcntl qw/:seek/;
+my $direction = $ARGV[2];
+$|=1;
 
-
+my $file;
+my @lattice;
+my @box_angles;
+my @slab;
 #Configuration
+
+$boxes = 50;
 $wind_size = 1.5;
 $stride = 0.2;
-$zlo = 0;
-$zhi = 60.9;
 #$act = 9.97e-25; # g/(Angstrom^3)
 $act = 9.97e-2; # reduced power
 
 
-open(DATA, $ARGV[0]);
 
-#Find the last frame
-$i=0;
-$last=0;
-while($line = readline(DATA)) {
-	$last = ($line =~ /^3690/)? $i: $last;
-	if ($line =~ /^3690/) {
-		push(@starts, $i);
-	}
-	$i++;
+
+#Fill density with zeros;
+for ($i = 0; $i < $boxes; $i++) {
+	$box[$i] = 0;
 }
 
-#Back to the beginning
-seek DATA, 0, SEEK_SET;
+opendir(RAW, "$ARGV[0]") || die "couldn't open dir: $ARGV[0]: $! \n";
+open(BOUNDS, "$ARGV[1]") || die " Couldn't open $ARGV[1] for  slab bounds:$!\n";
 
-for ($i = 0; $i <= $last; $i++) {
-	$line = readline(DATA);
-}
-
-print "#Last frame found at line: $last\n";
-
-$xmax = -9e9;
-$xmin = 9e9;
-$ymax = $xmax;
-$ymin = $xmin;
-
-#Save in the position of the oxygen atoms and use that to calculate the density
-while($line = readline(DATA)) {
-	chomp($line);
-	$line =~ s/^\s+//;
-	($type, $i, $j, $k) = split(/\s+/, $line);
-	
-	if($type >5) {
-		last;
-	} else {
-	
-	$xmax = ($i > $xmax) ? $i: $xmax;
-	$xmin = ($i < $xmin) ? $i: $xmin;
-	$ymax = ($j > $ymax) ? $i: $ymax;
-	$ymin = ($j < $ymin) ? $i: $ymin;
-	if ($type == 4 || $type == 5) {
-		push(@x, $i);
-		push(@y, $j);
-		push(@z, $k);
-	}
-	
+while ($line = readdir(RAW)) {
+	if ($line =~ /.*pdb/ ) {
+		push(@files, $line);
 	}
 }
-
-$vol = ($xmax - $xmin) * ($ymax - $ymin) * $wind_size;
-
-$x_dist = $xmax - $xmin;
-$y_dist = $ymax - $min;
-print "#Window dimensions: $x_dist x $y_dist x $wind_size\n";
-print "#Volume: $vol A^3\n";
-
-for ($i=$zlo; $i < $zhi; $i += $stride) {
-	$n = 0;
-	foreach $j (@z) {
-		if (($i < $j) && $j < ($i + $wind_size)) {
-			$n ++;
+closedir(RAW);
+@files = sort {$a <=> $b } @files;
+for ($i = 0; $i < 500; $i++) { # scalar(@files); $i++) { 
+	$file = $files[$i];
+#print "$file...";
+	open(DATA, "$ARGV[0]/$file") || die "Failed to open $raw/$file:$!";
+	$found = 0;
+	while($line = readline(DATA)) {
+		if($line =~ /^CRYST1.*/ ) {
+			@params = split(/\s+/, $line);
+			push (@lattice, $params[1]);
+			push (@lattice, $params[2]);
+			push (@lattice, $params[3]);
+			push (@box_angles, $params[4]);
+			push (@box_angles, $params[5]);
+			push (@box_angles, $params[6]);
+			$found = 1;
+			last;
 		}
 	}
+	if ($found != 1) {
+		printf "Couldn't get dimensions for $file, skipping\n";
+		next;
+	}
 	
-	$n = $n/3;
-	$density =$n / $vol; # Number per A^3
-	$n = $n / $vol;
+	$stride = $lattice[$direction -1] / (2*$boxes);
 
-
-	#$density *= 0.001; # Number per nm^3
-	$density *= (18/6); # g/nm^3
+	@slab = qw();
+	# get the precomputed slab boundary
+	while($bounds = readline(BOUNDS)) {
+		@params = split(/\s+/,$bounds);
+		if ($params[0] == $file) {
+			push (@slab, $params[1]);
+			push (@slab, $params[2]);
+			last;
+		}
+	}
+	# Skip on to the WATER
+	@water = qw();
+	while ($line = readline(DATA)) {
+		@params = split(/\s+/, $line) ;
+		if ($params[3] =~ /.*SOL.*/ && $params[2] =~ /.*OW.*/ ) {
+			# Save the O positions
+			push(@water ,"$params[5] $params[6] $params[7]");
+			 
+		}
+	}
+	close(DATA);
 	
-	$density = $density / $act; # ratio compared to known bulk
-	$mid = $i + 0.5 * $wind_size;
-	print "$mid\t$density\t$n\n";
+	$vol = ($lattice[0] *$lattice[1] *$lattice[2] *2 *$wind_size)/$lattice[$direction-1];
+	
+	#Count number in each box 
+	for ($l = 0; $l < $boxes; $l++) {
+		$density = 0;
+		for ($j = 0; $j < scalar(@water); $j++ ) {
+			@coords = split (/\s+/, $water[$j]);
+			if ($coords[$direction-1] < ($slab[0]+($l+1)*$stride+$wind_size) && $coords[$direction-1] > ($slab[0]+($l)*$stride+$wind_size)) {
+				$density ++;
+			}
+			#check the bottom
+			elsif ($coords[$direction-1] > ($slab[1] - ($l+1)*$stride - $wind_size) && $coords[$direction-1] < ($slab[1]-$l*$stride-$wind_size)) {
+				$density++;
+			}
+			# We should also check the periodic image for the bottom
+			elsif (($coords[$direction-1]-$lattice[$direction-1]) > ($slab[1] - ($l+1)*$stride - $wind_size) && ($coords[$direction-1]-$lattice[$direction-1]) < ($slab[1]-$l*$stride-$wind_size)) {
+				$density++;
+			}
+		}
+		$density =$density / $vol; # Number per A^3
+		#$density *= 0.001; # Number per nm^3
+		$density *= (18/6); # g/nm^3
+		$box[$l] += $density;
+	}
+	print "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b$file";
 }
+
+
+
+open(OUT, ">density.tsv");
+for ($i = 0; $i < $boxes; $i++) {
+	$density = $box[$i]/scalar(@files);
+	$mid = $i*$stride + 0.5 * $wind_size;
+	print OUT "$mid\t$box[$i]\t$density\n";
+}
+close(out);
+print "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bDone\n";
