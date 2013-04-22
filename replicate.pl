@@ -62,7 +62,9 @@ sub rep
 	print " iCurChain: $iCurChain ALT:$alt\n";
 	if ($alt == 1 && ((-1)** $iCurChain) > 0 ) {
 		$curRes--;
-	}
+	} #else {
+#		$curRes++;
+#}
 	for ($i = 0; $i < $xrep; $i++) {
 		for ($j = 0; $j < $yrep; $j++) {
 			if ($alt == 1 && ((-1)** $iCurChain) < 0 ) {
@@ -101,8 +103,11 @@ sub rep
 				$curRes += (($nr * $zrep) );
 				
 			}
-			if ($alt != 1) {
+			if($alt ==1 && !(((-1)**$iCurChain) < 0)) {
 				$curRes++;
+			}
+			if ($alt != 1) {
+#	$curRes++;
 			}
 			$curChain++;
 			if ($curChain eq "10") {
