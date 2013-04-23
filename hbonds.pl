@@ -31,16 +31,16 @@ SCSC_sum();
 SCB_sum();
 print <<END;
 @ s0 legend "# bonds"
-@ s0 hidden flase
+@ s0 hidden false
 @ s0 on
 @ s1 legend "# BB bonds"
-@ s1 hidden flase
+@ s1 hidden false
 @ s1 on
 @ s2 legend "# SC-SC bonds"
-@ s2 hidden flase
+@ s2 hidden false
 @ s2 on
 @ s3 legend "# SC-BB bonds"
-@ s3 hidden flase
+@ s3 hidden false
 @ s3 on
 @ sort s0 X ascending
 @ sort s1 X ascending
@@ -86,7 +86,7 @@ sub process
 			@params2 = split(/\s+/,$line);
 			if ($params2[4] != $curRes) {
 				last;
-			} elsif ($params2[2] !~ /^H[HNTZE123].*/) {
+			} elsif ($params2[2] !~ /^[12]*H[HNTZDE123].*/) {
 				last;
 			}
 			#Calculate the distance to the H
@@ -107,7 +107,7 @@ sub process
 
 	}
 
-#	print "D:@donor\nA:@accept\nH:@donorH\n";
+	print "D:@donor\nA:@accept\nH:@donorH\n";
 	#loop through donors
 	$nbonds = 0;
 	$scsc = 0;
@@ -130,6 +130,7 @@ sub process
 			$dist += ($A[7] - $B[7])**2;
 			$dist = sqrt($dist);
 
+			#print "$A[1] $B[1] $dist\n";
 			if($dist > 3.5) {
 				next;
 			}
@@ -155,7 +156,7 @@ sub process
 				$theta += ($A[6] - $C[6])*($B[6] - $C[6]);
 				$theta += ($A[7] - $C[7])*($B[7] - $C[7]);
 				if ($dist*$dist2 == 0) {
-					print "$A[1] $B[1] $C[1]\n";
+					#print "$A[1] $B[1] $C[1]\n";
 					exit;
 				}
 				$theta /= ($dist *$dist2);
