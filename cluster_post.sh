@@ -1,6 +1,6 @@
 #!/bin/bash
-JSE=/home/brown/analysis/n16n_best.pdb
-#JSE=/Users/aaronbrown/n16n_best.pdb #Mac
+#JSE=/home/brown/analysis/n16n_best.pdb
+JSE=/Users/aaronbrown/n16n_best.pdb #Mac
 
 clusters=`mok '{println $i; $i++;}BEGIN {$i=0}' clusters.pdb | tail -n 1`
 
