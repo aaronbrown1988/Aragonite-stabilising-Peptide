@@ -13,6 +13,8 @@ TPR=`echo $2`
 DATE=`date +%y%m%d`
 
 mkdir $DATE
+rm current
+ln -s $DATE current
 cd $DATE
 
 mkdir cluster
