@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 #
 # Finds h bonds. Takes a folder of pdb's as the argument.
+# Caveat: Peptide must be centered in the box, It's can't be hanging over the PBC
 #
 use Math::Trig;
 my @pairs = qw();
@@ -107,7 +108,7 @@ sub process
 
 	}
 
-	print "D:@donor\nA:@accept\nH:@donorH\n";
+	#print "D:@donor\nA:@accept\nH:@donorH\n";
 	#loop through donors
 	$nbonds = 0;
 	$scsc = 0;
@@ -239,12 +240,12 @@ sub bond_sum
 	for ($i = 0; $i < @pairs; $i++) {
 		$sum{$pairs[$i]} = $summary[$i];
 	}
-	@pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
+	@sum_pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
 	for ($i = 0; $i < @pairs; $i++) {
-		$line = $pairs[$i];#$sum{$summary[$i]};
+		$line = $sum_pairs[$i];#$sum{$summary[$i]};
 		@params = split(/\s+/, $line);
 		$percent = $sum{$pairs[$i]} / scalar(@files);
-		printf BS "%10s\t%10s\t%10s\t\%3.2f\n", $params[0],$params[1],$sum{$pairs[$i]}, $percent;
+		printf BS "%10s\t%10s\t%10s\t\%3.2f\n", $params[0],$params[1],$sum{$sum_pairs[$i]}, $percent;
 
 	}
 	close(BS);
@@ -260,11 +261,13 @@ sub BB_sum
 	my %sum;
 	for ($i = 0; $i < @pairs; $i++) {
 		@params = split(/[: -]+/, $pairs[$i]);
-		if ($params[1] =~ /(CA|N|C|O)\b/ && $params[3] =~ /(CA|C|N|O)\b/) {
+		if (($params[1] =~ /(CA|N|C|O)\b/) && ($params[3] =~ /(CA|C|N|O)\b/)) {
+			if( $sum{"$params[0] $params[2]"} == undef) {
+				 $sum{"$params[0] $params[2]"} = 0;
+			}
 			$sum{"$params[0] $params[2]"} += $summary[$i];
 			push(@BB_pairs, "$params[0] $params[2]");
 		}
-
 	}
 
 
@@ -318,7 +321,8 @@ sub SCB_sum
 	my %sum;
 	for ($i = 0; $i < @pairs; $i++) {
 		@params = split(/[: -]+/, $pairs[$i]);
-		if ($params[1] =~ /(CA|N|C|O)\b/ || $params[3] =~ /(CA|C|N|O)\b/) {
+
+		if (($params[1] =~ /^(CA|N|C|O)\b/ && ($params[3] !~ /^(CA|C|N|O)\b/)) || (($params[3] =~ /(CA|C|N|O)\b/) && ($params[1] !~ /(CA|C|N|O)\b/))) {
 			$sum{"$params[0] $params[2]"} += $summary[$i];
 			push(@SCB_pairs, "$params[0] $params[2]");
 		}
