@@ -16,6 +16,8 @@ $pp2 = 0;
 
 $other = 0;
 
+$ARGV[0] =~ s/.*-//;
+$ARGV[0] =~ s/\.xvg//;
 while ($line = readline(FH)) {
 	if ($line =~ /^[#@].*/) {
 		next;
@@ -40,7 +42,7 @@ while ($line = readline(FH)) {
 	}
 }
 
-print "$alpha_i\t$alpha_o\t$alpha_l\t$beta\t$gamma\t$gamm_l\t$pp2\t$other\n";
+print "$ARGV[0]\t$alpha_i\t$alpha_o\t$alpha_l\t$beta\t$gamma\t$gamm_l\t$pp2\t$other\n";
 
 
 sub in_alpha_i {
