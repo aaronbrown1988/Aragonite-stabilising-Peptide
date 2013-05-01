@@ -46,7 +46,10 @@ cd ..
 mkdir ramas
 cd ramas
 
-for i in {1..40} ; do
+frames=`gmxcheck -f $XTC 2>&1 | grep -a1 Item gmxcheck | grep Step | awk '{print $2}'`
+plots=$[$frames/500]
+
+for i in $(seq $plots) ; do
 j=$[$i-1]
 
 k=$[$i*500]
