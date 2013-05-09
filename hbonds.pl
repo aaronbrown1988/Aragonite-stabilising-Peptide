@@ -174,16 +174,16 @@ sub process
 				
 				
 				#Classification
-				if ($A[2] =~ /(CA|N|C|O)\b/) {
+				if ($A[2] =~ /(CA|N|C|O|NT)\b/) {
 					#Backbone;
-					if($B[2] =~ /(CA|N|C|O)\b/) {
+					if($B[2] =~ /(CA|N|C|O|NT)\b/) {
 						$bb ++;
 						
 					} else {
 						$scb ++;
 					}
 				} else {
-					if($B[2] =~ /(CA|N|C|O)\b/) {
+					if($B[2] =~ /(CA|N|C|O|NT)\b/) {
 						$scb ++;
 						
 					} else {
@@ -244,7 +244,7 @@ sub bond_sum
 	for ($i = 0; $i < @pairs; $i++) {
 		$line = $sum_pairs[$i];#$sum{$summary[$i]};
 		@params = split(/\s+/, $line);
-		$percent = $sum{$pairs[$i]} / scalar(@files);
+		$percent = $sum{$sum_pairs[$i]} / scalar(@files);
 		printf BS "%10s\t%10s\t%10s\t\%3.2f\n", $params[0],$params[1],$sum{$sum_pairs[$i]}, $percent;
 
 	}
@@ -261,7 +261,7 @@ sub BB_sum
 	my %sum;
 	for ($i = 0; $i < @pairs; $i++) {
 		@params = split(/[: -]+/, $pairs[$i]);
-		if (($params[1] =~ /(CA|N|C|O)\b/) && ($params[3] =~ /(CA|C|N|O)\b/)) {
+		if (($params[1] =~ /(CA|N|C|O|NT)\b/) && ($params[3] =~ /(CA|C|N|O|NT)\b/)) {
 			if( $sum{"$params[0] $params[2]"} == undef) {
 				 $sum{"$params[0] $params[2]"} = 0;
 			}
@@ -292,7 +292,7 @@ sub SCSC_sum
 	my %sum;
 	for ($i = 0; $i < @pairs; $i++) {
 		@params = split(/[: -]+/, $pairs[$i]);
-		if ($params[1] !~ /(CA|N|C|O)\b/ && $params[3] !~ /(CA|C|N|O)\b/) {
+		if ($params[1] !~ /(CA|N|C|O|NT)\b/ && $params[3] !~ /(CA|C|N|O|NT)\b/) {
 			$sum{"$params[0] $params[2]"} += $summary[$i];
 			push(@SCSC_pairs, "$params[0] $params[2]");
 		}
@@ -322,7 +322,7 @@ sub SCB_sum
 	for ($i = 0; $i < @pairs; $i++) {
 		@params = split(/[: -]+/, $pairs[$i]);
 
-		if (($params[1] =~ /^(CA|N|C|O)\b/ && ($params[3] !~ /^(CA|C|N|O)\b/)) || (($params[3] =~ /(CA|C|N|O)\b/) && ($params[1] !~ /(CA|C|N|O)\b/))) {
+		if (($params[1] =~ /^(CA|N|C|O|NT)\b/ && ($params[3] !~ /^(CA|C|N|O|NT)\b/)) || (($params[3] =~ /(CA|C|N|O|NT)\b/) && ($params[1] !~ /(CA|C|N|O|NT)\b/))) {
 			$sum{"$params[0] $params[2]"} += $summary[$i];
 			push(@SCB_pairs, "$params[0] $params[2]");
 		}
