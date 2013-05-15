@@ -21,7 +21,8 @@ mkdir cluster
 cd cluster
 
 #for i in {'0.1','0.25','0.5','0.7'}; do
-for i in {'0.25','0.4','0.5','0.6'}; do
+for i in {'0.4','0.6'}; do
+#for i in {'0.25','0.4','0.5','0.6'}; do
 	mkdir $i;
 	cd $i;
 
