@@ -27,6 +27,7 @@ for($I=0; $I < @files; $I++) {
 closedir(DH);
 #bond_data();
 bond_sum();
+coarse_sum();
 BB_sum();
 SCSC_sum();
 SCB_sum();
@@ -231,10 +232,43 @@ sub bond_data
 	}
 }
 
+sub coarse_sum
+{
+	open (CS, ">HB_res_sum.txt") || die "Couldn't open HB_sum for writing\n";
+	printf CS "%10s\t%10s\t%10s\t%10s\n", "Res1","Res2","Occurance","% of frames";
+	print CS "--------------------------------------------------------------------------\n";
+	my %sum;
+	for ($i = 0; $i < @pairs; $i++) {
+		@throw = split(/[:-\s]+/, $pairs[$i]);
+		$throw[1] = $throw[0];
+		$throw[3] = $throw[2];
+		$throw[1] =~ s/[A-Z]+//;
+		$throw[3] =~ s/[A-Z]+//;
+
+		if ($throw[1] <= $throw[3]) {
+			$line = "$throw[0] $throw[2]";
+		} else {
+			$line = "$throw[2] $throw[0]";
+		}
+
+		#print "$pairs[$i]: @throw = $line\n";
+		$sum{$line} += $summary[$i];
+	}
+	@sum_pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
+	for ($i = 0; $i < @sum_pairs; $i++) {
+		$line = $sum_pairs[$i];#$sum{$summary[$i]};
+		@params = split(/\s+/, $line);
+		$percent = $sum{$sum_pairs[$i]} / scalar(@files);
+		printf CS "%10s\t%10s\t%10s\t\%3.2f\n", $params[0],$params[1],$sum{$sum_pairs[$i]}, $percent;
+
+	}
+	close(CS);
+}
+
 sub bond_sum
 {
-	open (BS, ">HB_sum.txt") || die "Couldn't open HB_sum for writing\n";
-	printf BS "%10s\t%10s\t%10s\t%10s\n", "Atom1","Atom2","Occurance","% of frames";
+	open(BS, ">HB_sum.txt" ) || die "Couldn't open HB_sum for writing\n";
+	printf CBS "%10s\t%10s\t%10s\t%10s\n", "Atom","Atom2","Occurance","% of frames";
 	print BS "--------------------------------------------------------------------------\n";
 	my %sum;
 	for ($i = 0; $i < @pairs; $i++) {
