@@ -37,7 +37,7 @@ while ($file = readdir(DH)) {
 			$pos_new = tell(FH);
 			while ($line = readline(FH)) {
 				@params2 = split(/\s+/, $line);
-				if ($params2[3] eq "PHE" || $params2[3] eq "TYR" ||$params2[3] eq "TRP"  ||$params2[3] eq "ILE" || $params2[3] eq "HIS") {#|| $params2[3] eq "GLY") {
+				if (($params2[3] eq "PHE" || $params2[3] eq "TYR" ||$params2[3] eq "TRP"  ||$params2[3] eq "ILE" || $params2[3] eq "HIS") && ($params2[4] > ($params[4]+1))) {#|| $params2[3] eq "GLY") {
 					@coords2 = find_center($line);
 					#	print "$params2[3]-$params2[4] : @coords2\n";
 					$dx = ($coords[0] - $coords2[0]);
