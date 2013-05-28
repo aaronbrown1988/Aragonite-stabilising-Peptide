@@ -125,6 +125,8 @@ sub process
 			if ($A[4] == $B[4]) {
 				next;
 			}
+
+
 			push(@pairs, "$A[3]$A[4]:$A[2]  $B[3]$B[4]:$B[2]");
 			$bonds[@pairs-1] = 0;
 			$dist = ($A[5] - $B[5])**2;
@@ -240,11 +242,17 @@ sub coarse_sum
 	my %sum;
 	for ($i = 0; $i < @pairs; $i++) {
 		@throw = split(/[:-\s]+/, $pairs[$i]);
+		#Check to see if SCSC Charge residue and bail
+		if ( ( ($throw[2] =~ /ASP.*/ || $throw[2] =~ /GLU.*/) && ($throw[0] =~  /LYS.*/ || $throw[0] =~ /ARG.*/)) || ( ($throw[0] =~ /ASP.*/ || $throw[0] eq /GLU.*/) && ($throw[2] =~  /LYS.*/ || $throw[2] =~ /ARG.*/) ) ) {
+			if ($throw[1] !~ /(CA|N|C|O|NT)\b/ && $throw[3] !~ /(CA|N|C|O|NT)\b/) {
+				next;
+			}
+		}
+
 		$throw[1] = $throw[0];
 		$throw[3] = $throw[2];
 		$throw[1] =~ s/[A-Z]+//;
 		$throw[3] =~ s/[A-Z]+//;
-
 		if ($throw[1] <= $throw[3]) {
 			$line = "$throw[0] $throw[2]";
 		} else {
@@ -327,6 +335,9 @@ sub SCSC_sum
 	for ($i = 0; $i < @pairs; $i++) {
 		@params = split(/[: -]+/, $pairs[$i]);
 		if ($params[1] !~ /(CA|N|C|O|NT)\b/ && $params[3] !~ /(CA|C|N|O|NT)\b/) {
+			if ( ($params[0] =~ /(ASP|GLU).*/ && $params[3] =~ /(ARG|LYS).*/) || ($params[3] =~ /(ASP|GLU).*/ && $params[0] =~ /(ARG|LYS).*/)) {
+				next;
+			}
 			$sum{"$params[0] $params[2]"} += $summary[$i];
 			push(@SCSC_pairs, "$params[0] $params[2]");
 		}
