@@ -29,7 +29,8 @@ while ($line = readline(FH)) {
 		}
 	}
 	print SS "\n";
-	$t += $ARGV[1];
+
+	if($line =~ /.*LYS-29.*/){$t += $ARGV[1];}
 }
 
 print SS <<EOF;
