@@ -18,6 +18,7 @@ $other = 0;
 
 $ARGV[0] =~ s/.*-//;
 $ARGV[0] =~ s/\.xvg//;
+$n =0;
 while ($line = readline(FH)) {
 	if ($line =~ /^[#@].*/) {
 		next;
@@ -39,8 +40,18 @@ while ($line = readline(FH)) {
 		$pp2++;
 	} else {
 		$other ++;
-	}
+	} 
+	$n++;
 }
+
+$alpha_i /= $n;
+$alpha_o /= $n;
+$alpha_l /= $n;
+$beta /= $n;
+$gamma /=$n;
+$gamm_l /= $n;
+$pp2 /= $n;
+$other /= $n;
 
 print "$ARGV[0]\t$alpha_i\t$alpha_o\t$alpha_l\t$beta\t$gamma\t$gamm_l\t$pp2\t$other\n";
 
