@@ -47,14 +47,14 @@ cd ..
 mkdir ramas
 cd ramas
 
-frames=`gmxcheck -f $XTC 2>&1 | grep -a1 Item gmxcheck | grep Step | awk '{print $2}'`
-plots=$[$frames/500]
+frames=`/sw/bin/gmxcheck -f $XTC 2>&1 | grep -a1 Item | grep Step | awk '{print $2}'`
+plots=$[$frames/50]
 
 for i in $(seq $plots) ; do
 j=$[$i-1]
 
-k=$[$i*500]
-l=$[$j*500]
+k=$[$i*50]
+l=$[$j*50]
  g_rama -f $XTC -s $TPR -o rama-$l -b $l -e $k -dt 10;
 
  cat rama-$l.xvg | sed -e 's/^[#@].*//' > rama-$l.lou;
