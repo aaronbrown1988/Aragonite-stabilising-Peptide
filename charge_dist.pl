@@ -33,10 +33,12 @@ while ($file = readdir(DH)) {
 		}
 	}
 	seek(FH, 0, 0);
+	$maxd = sqrt((2*$bx)**2 + (2*$by)**2 + (2*$bz)**2);
+#	die "#$bx x $by x $bz  = $maxd\n";
     while ($line = readline(FH)) {
         $line =~ s/^\s+//;
         @params = split(/\s+/, $line);
-		if($params[2] eq "CG" && ($params[3] eq "ASP" || $params[3] eq "GLU")) {
+	if(($params[2] eq "CG" && $params[3] eq "ASP" )|| ($params[2] eq "CD" && $params[3] eq "GLU")) {
             $pos = tell(FH);
             while($line = readline(FH)) {
                 @params2 = split(/\s+/, $line);
@@ -52,19 +54,22 @@ while ($file = readdir(DH)) {
 			$dist += ($dy)**2;
 			$dist += ($dz)**2;
 			
-                    $dist = sqrt($dist);
-                    print "\t$dist";
-					$pair = "$params[3]$params[4]-$params2[3]$params2[4]";
+                    	$dist = sqrt($dist);
+		   	 if($dist > $maxd ) {
+			    die " WHOA: $params$params[3]$params[4]-$params2[3]$params2[4] determined to be $dist away. Max $maxd\n";
+		   	 }
+                   	 print "\t$dist";
+			$pair = "$params[3]$params[4]-$params2[3]$params2[4]";
 					push(@pairs,$pair);
-				}
 			}
-			seek(FH, $pos, 0);
 		}
+			seek(FH, $pos, 0);
+	}
 		if(($params[2] eq "CZ" && $params[3] eq "ARG" ) || ( $params[3] eq "LYS" &&  $params[2] eq "NZ") ) {
 			$pos = tell(FH);
 			while($line = readline(FH)) {
 				@params2 = split(/\s+/, $line);
-				if (($params2[2] eq "CG" && ($params2[3] eq "ASP" || $params2[3] eq "GLU" ))  && $params2[4] != ($params[4] +1)) {
+				if ((($params2[2] eq "CG" && $params2[3] eq "ASP") || ($params2[2] eq "CD" && $params2[3] eq "GLU" ))  && $params2[4] != ($params[4] +1)) {
 					$dx = ($params[5] - $params2[5]);
                     $dy = ($params[6] - $params2[6]);
 					$dz= ($params[7] - $params2[7]);
@@ -75,6 +80,10 @@ while ($file = readdir(DH)) {
 					$dist = ($dx)**2;
 					$dist += ($dy)**2;
 					$dist += ($dz)**2;
+					$dist = sqrt($dist);
+		   	 		if($dist > $maxd ) {
+			    			die " WHOA: $params$params[3]$params[4]-$params2[3]$params2[4] determined to be $dist away. Max $maxd\n";
+		   	 		}
 					print "\t$dist";
 					$pair = "$params[3]$params[4]-$params2[3]$params2[4]";
 					push(@pairs,$pair);
