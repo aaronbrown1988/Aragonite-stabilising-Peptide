@@ -42,7 +42,7 @@ while ($file = readdir(DH)) {
             $pos = tell(FH);
             while($line = readline(FH)) {
                 @params2 = split(/\s+/, $line);
-		if((($params2[2] eq "CZ" && $params2[3] eq "ARG" ) || ( $params2[3] eq "LYS" &&  $params2[2] eq "NZ")) && $params2[4] != ($params[4]+1)) { 
+		if((($params2[2] =~ /NH[12]/ && $params2[3] eq "ARG" ) || ( $params2[3] eq "LYS" &&  $params2[2] eq "NZ")) && $params2[4] != ($params[4]+1)) { 
                     $dx = ($params[5] - $params2[5]);
                     $dy = ($params[6] - $params2[6]);
 					$dz= ($params[7] - $params2[7]);
@@ -65,7 +65,7 @@ while ($file = readdir(DH)) {
 		}
 			seek(FH, $pos, 0);
 	}
-		if(($params[2] eq "CZ" && $params[3] eq "ARG" ) || ( $params[3] eq "LYS" &&  $params[2] eq "NZ") ) {
+		if(($params[2] =~ /NH[12]/ && $params[3] eq "ARG" ) || ( $params[3] eq "LYS" &&  $params[2] eq "NZ") ) {
 			$pos = tell(FH);
 			while($line = readline(FH)) {
 				@params2 = split(/\s+/, $line);
