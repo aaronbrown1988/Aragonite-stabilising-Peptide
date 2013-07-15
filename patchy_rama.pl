@@ -59,14 +59,14 @@ print "$ARGV[0]\t$alpha_i\t$alpha_o\t$alpha_l\t$beta\t$gamma\t$gamm_l\t$pp2\t$ot
 sub in_alpha_i {
 	local ($x,$y) = @_;
 	$ret = 0;
-	if ($x > -90 && $x < -30 && $y <-30 && $y > -70) {$ret = 1;}
+	if ($x > -90 && $x < -30 && $y <-15 && $y > -75) {$ret = 1;}
 	return $ret;
 }
 
 sub in_alpha_l {
 	local ($x,$y) = @_;
 	$ret = 0;
-	if( $x> 30 && $x < 100 && $y < 70 && $y> 20) { $ret = 1;}
+	if( $x> 30 && $x < 90 && $y < 50 && $y> 15) { $ret = 1;}
 	return $ret;
 }
 
@@ -95,9 +95,9 @@ sub in_gamma_l {
 sub in_beta {
 	local ($x,$y)=@_;
 	$ret =0;
-	if ($x < -110 && $y > 90) { $ret = 1;}
-	if ($x < -110 && $y < -150) { $ret = 1;}
-	if ($x > 170 && $y > 90) { $ret = 1;}
+	if ($x < -100 && $y > 90) { $ret = 1;}
+	if ($x < -100 && $y < -150) { $ret = 1;}
+	if ($x > 150 && $y > 90) { $ret = 1;}
 	return $ret;
 }
 
@@ -105,8 +105,8 @@ sub in_beta {
 sub in_pp2 {
 	local ($x,$y) = @_;
 	$ret = 0;
-	if ($x < 0 && $x >-110 && $y > 90) { $ret = 1;}
-	if ($x< 0 && $x > -110 && $y <-150) {$ret = 1;}
+	if ($x < 0 && $x >-100 && $y > 90) { $ret = 1;}
+	if ($x< 0 && $x > -100 && $y <-150) {$ret = 1;}
 	return $ret;
 } 
 	
