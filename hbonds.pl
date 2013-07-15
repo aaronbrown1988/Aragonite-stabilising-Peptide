@@ -88,7 +88,7 @@ sub process
 			@params2 = split(/\s+/,$line);
 			if ($params2[4] != $curRes) {
 				last;
-			} elsif ($params2[2] !~ /^[12]*H[HNTZDE123].*/) {
+			} elsif ($params2[2] !~ /^[12]*H[HNGTZDE123]*.*/) {
 				last;
 			}
 			#Calculate the distance to the H
@@ -170,6 +170,9 @@ sub process
 				if (abs(180 - $theta) > 30) {
 					next;
 				}
+				if (($A[2] !~ /(CA|N|C|O|NT)\b/ && $B[2] !~ /(CA|C|N|O|NT)\b/) && (($A[3] =~ /(ASP|GLU)/ && $B[3] =~ /(LYS|ARG)/) || ($B[3] =~ /(ASP|GLU)/ && $A[3] =~ /(LYS|ARG)/)) ) {
+					next;
+				}
 				#print "$A[1] $C[1] $B[1] $theta\n";
 				@bonds[@pairs-1] = -1;
 				$summary[@pairs-1]++;
@@ -190,7 +193,8 @@ sub process
 						$scb ++;
 						
 					} else {
-						$scsc ++;
+					
+							$scsc ++;
 					}
 				}
 				print BD ",$A[3]$A[4]:$A[2]-$B[3]$B[4]:$B[2]";
@@ -266,7 +270,7 @@ sub coarse_sum
 	for ($i = 0; $i < @sum_pairs; $i++) {
 		$line = $sum_pairs[$i];#$sum{$summary[$i]};
 		@params = split(/\s+/, $line);
-		$percent = $sum{$sum_pairs[$i]} / scalar(@files);
+		$percent = $sum{$sum_pairs[$i]} / scalar(@files) * 100;
 		printf CS "%10s\t%10s\t%10s\t\%3.2f\n", $params[0],$params[1],$sum{$sum_pairs[$i]}, $percent;
 
 	}
