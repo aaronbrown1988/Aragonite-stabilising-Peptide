@@ -107,7 +107,7 @@ sub rep
 				$curRes++;
 			}
 			if ($alt != 1) {
-#	$curRes++;
+				$curRes++;
 			}
 			$curChain++;
 			if ($curChain eq "10") {
