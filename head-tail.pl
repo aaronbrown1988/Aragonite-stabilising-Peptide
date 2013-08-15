@@ -21,6 +21,12 @@ my $nC1=0;
 my $nC2=0;
 my $nC4=0;
 my $nC3=0;
+my $nO5=0;
+my $nC6=0;
+my $nH3=0;
+my $nO3=0;
+my $nC5=0;
+
 my $n=9e9;
 my $m=0;
 
@@ -48,6 +54,22 @@ while ($line =readline(FH)) {
 		
 		} elsif($params[4] =~/.*C1.*/) {
 			$nC1 = $params[0];
+		} elsif($params[4] =~/.*C5.*/) {
+			$nC5 = $params[0];
+		} elsif($params[4] =~/.*C6.*/) {
+			$nC6 = $params[0];
+		} elsif($params[4] =~/.*O5.*/) {
+			$nO5 = $params[0];
+		} elsif($params[4] =~/.*H3.*/) {
+			$nH3 = $params[0];
+		} elsif($params[4] =~/.*H4.*/) {
+			$nH4 = $params[0];
+		} elsif($params[4] =~/.*H5.*/) {
+			$nH5 = $params[0];
+		} elsif($params[4] =~/\bO3\b/) {
+			$nO3 = $params[0];
+		} elsif($params[4] =~/.*O5.*/) {
+			$nO5 = $params[0];
 		}
 	} 
 	if($params[2] >= $m) {
@@ -56,9 +78,13 @@ while ($line =readline(FH)) {
 			$mC1 = $params[0];
 		} elsif( $params[4] =~ /.*O1.*/) {
 			$mO1 = $params[0];
+		} elsif( $params[4] =~ /.*H1.*/) {
+			$mH1 = $params[0];
 		
 		} elsif( $params[4] =~ /.*O5.*/) {
 			$mO5 = $params[0];
+		} elsif( $params[4] =~ /.*C2.*/) {
+			$mC2 = $params[0];
 		}
 	}
 }
@@ -82,6 +108,7 @@ while ($line = readline(FH)) {
 	}
 }
 print OUT "$mC1\t$mO1\t$nC4\t5\n";
+print OUT "$nH4\t$nC4\t$mO1\t5\n";
 
 #Move to dih
 while ($line = readline(FH)) {
@@ -90,10 +117,24 @@ while ($line = readline(FH)) {
 		last;
 	}
 }
-print OUT "$nC3\t$nC4\t$mO1\t$mC1\t9\n";
-print OUT "$nC4\t$mO1\t$mC1\t$mO5\t9\n";
-#print OUT "$mO5\t$mO1\t$nC1\t$nC2\t9\n";
+print ";link dihedrals\n";
+print OUT "$mO5\t$mC1\t$mO1\t$nC4\t9\n";
+print OUT "$mH1\t$mC1\t$mO1\t$nC4\t9\n";
+print OUT "$mC2\t$mC1\t$mO1\t$nC4\t9\n";
 
+print OUT "$mC1\t$mO1\t$nC4\t$nC3\t9\n";
+print OUT "$mC1\t$mO1\t$nC4\t$nC5\t9\n";
+print OUT "$mC1\t$mO1\t$nC4\t$nH4\t9\n";
+
+
+print OUT "$nH5\t$nC5\t$nC4\t$mO1\t9\n";
+print OUT "$nO5\t$nC5\t$nC4\t$mO1\t9\n";
+print OUT "$nC6\t$nC5\t$nC4\t$mO1\t9\n";
+
+print OUT "$nC2\t$nC3\t$nC4\t$mO1\t9\n";
+print OUT "$nH3\t$nC3\t$nC4\t$mO1\t9\n";
+print OUT "$nO3\t$nC3\t$nC4\t$mO1\t9\n";
+print ";end link dihedrals\n";
 
 while($line = readline(FH)) {
 	print OUT $line;
