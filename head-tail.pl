@@ -100,6 +100,27 @@ while ($line = readline(FH)) {
 }
 print OUT "$mO1\t$nC4\t1\n";
 
+#pairs
+while ($line = readline(FH)) {
+	print OUT $line;
+	if($line =~ /.*pairs.*/) {
+		last;
+	}
+}
+print OUT "$mO1\t$nH5\t1\n";
+print OUT "$mO1\t$nO5\t1\n";
+print OUT "$mO1\t$nC2\t1\n";
+print OUT "$mO1\t$nH3\t1\n";
+print OUT "$mO1\t$nO3\t1\n";
+print OUT "$mO1\t$nC6\t1\n";
+print OUT "$mO5\t$nC4\t1\n";
+print OUT "$mC2\t$nC4\t1\n";
+print OUT "$mH1\t$nC4\t1\n";
+print OUT "$mC1\t$nC4\t1\n";
+print OUT "$mC1\t$nC3\t1\n";
+print OUT "$mC1\t$nC5\t1\n";
+
+
 #Go to angles
 while ($line = readline(FH)) {
 	print OUT $line;
@@ -109,6 +130,8 @@ while ($line = readline(FH)) {
 }
 print OUT "$mC1\t$mO1\t$nC4\t5\n";
 print OUT "$nH4\t$nC4\t$mO1\t5\n";
+print OUT "$mO1\t$nC4\t$nC5\t5\n";
+print OUT "$mO1\t$nC4\t$nC3\t5\n";
 
 #Move to dih
 while ($line = readline(FH)) {
