@@ -1,0 +1,18 @@
+
+@ HISTOGRAM (S0, MESH(0,360,360), OFF, ON)
+@ HISTOGRAM (S1, MESH(0,360,360), OFF, ON)
+@ HISTOGRAM (S2, MESH(0,360,360), OFF, ON)
+@ HISTOGRAM (S3, MESH(0,360,360), OFF, ON)
+@ HISTOGRAM (S4, MESH(0,360,360), OFF, ON)
+
+@ KILL S0
+@ KILL S1
+@ KILL S2
+@ KILL S3
+@ KILL S4
+
+@ s5 legend "Z-Y-X-N"
+@ s6 legend "Y-X-N-Co"
+@ s7 legend "Z-Y-N-Co"
+@ s8 legend "Z-Y-Co-Y"
+@ s9 legend "X-N-Co-Y"
