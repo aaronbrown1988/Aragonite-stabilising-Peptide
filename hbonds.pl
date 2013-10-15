@@ -67,6 +67,13 @@ sub process
 		if ($line !~ /.*ATOM.*/) {
 			next;
 		}
+		# Multiple chains fix
+		@params = split(/\s+/,$line);
+		if ($params[4] !~ /[0-9.]+/) {
+			$line =~ s/ $params[4] //;
+			$line =~ s/$params[3]/$params[3]$params[4]/;
+			#print "$line\n";
+		}
 		push(@peptide, $line);
 	}
 	close(FH);
