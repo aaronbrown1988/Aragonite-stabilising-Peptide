@@ -20,6 +20,8 @@ for ($j = 0; $j < 100; $j++) {
 	$hist{CLW}[$j] = 0;
 	$hist{all}[$j]=0;
 }
+$ca_bound =0;
+$cont_tot = 0;
 while ($line = readline(FH)) {
 	@ions = qw();
 	@peptide = qw();
@@ -53,6 +55,7 @@ while ($line = readline(FH)) {
 	$n{CLW}=0;
 	$min_res=0;
 	print FULL "$time";
+	$ca = 0;
 	for($i = 0; $i < @ions; $i++) {
 		@ip = split(/\s+/, $ions[$i]);
 		$my_min = 1e99;
@@ -72,7 +75,7 @@ while ($line = readline(FH)) {
 
 			if($mindist > $dist) {
 				$mindist = $dist;
-				$minpair = "$ip[2]:$ip[1] - $pp[1]:$pp[2]$pp[3]";
+				$minpair = "$ip[2]:$ip[1] - $pp[1]:$pp[2]$pp[3]$pp[4]";
 			
 			}
 			if($my_min > $dist) {
@@ -88,9 +91,9 @@ while ($line = readline(FH)) {
 		$avg{$ip[3]} += $my_min;
 		$n{$ip[3]} ++;
 		$my_min = ceil($my_min);
-		if($my_min < 5) {$res{$ip[3]}[$min_res] ++;}
+		if($my_min < 5) {$res{$ip[3]}[$min_res] ++; $ca=1; $cont_tot++;}
 #	print "$my_min\n";
-		print FULL "\t$my_min";
+		print FULL "\t$my_min\tX$min_res";
 		if ($my_min > 99) { $my_min = 99;}
 		$hist{$ip[3]}[$my_min-1]++;
 		$hist{all}[$my_min-1]++;
@@ -102,6 +105,7 @@ while ($line = readline(FH)) {
 	$avg{CLW} /= $n{CLW};
 	print MINT "$time\t$mindist\t$minpair\n";
 	print AVGT "$time\t$avg{CA}\t$avg{CL}\t$avg{CLW}\n";
+	if($ca==1) {$ca_bound++;}
 
 
 }
@@ -113,8 +117,17 @@ for ($i = 0; $i < @ions; $i++) {
 	print FULL "@ s$i legend \"$params[1]$params[3]\"\n";
 }
 for ($i = 1; $i <= 30; $i++) {
+
+	$res{CA}[$i] = $res{CA}[$i]/ $cont_tot;
+	$res{CLW}[$i] = $res{CLW}[$i] /$cont_tot;
+	$res{CL}[$i] = $res{CL}[$i] / $cont_tot;
+
+	$res{CA}[$i] = ($res{CA}[$i] eq "")? 0 :$res{CA}[$i];
+	$res{CLW}[$i] = ($res{CLW}[$i] eq "")? 0 :$res{CLW}[$i];
+	$res{CL}[$i] = ($res{CL}[$i] eq "")? 0 :$res{CL}[$i];
 	print CONT "$i\t$res{CA}[$i]\t$res{CL}[$i]\t$res{CLW}[$i]\n";
 }
+print "#Frames with 1 or more CA bound: $ca_bound\n";
 close(FH);
 close(HIST);
 close(AVGT);
