@@ -7,3 +7,5 @@ while {$inp != -1} {
 	set curr [ expr ($curr + 1)]
 	set inp [gets stdin]
 }
+exit
+
