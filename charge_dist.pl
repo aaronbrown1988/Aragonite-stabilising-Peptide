@@ -37,10 +37,12 @@ while ($file = readdir(DH)) {
 #	die "#$bx x $by x $bz  = $maxd\n";
     while ($line = readline(FH)) {
         $line =~ s/^\s+//;
+        $line = checkline($line);
         @params = split(/\s+/, $line);
 	if(($params[2] eq "CG" && $params[3] eq "ASP" )|| ($params[2] eq "CD" && $params[3] eq "GLU")) {
             $pos = tell(FH);
             while($line = readline(FH)) {
+		    $line = checkline($line);
                 @params2 = split(/\s+/, $line);
 		if((($params2[2] =~ /NH[12]/ && $params2[3] eq "ARG" ) || ( $params2[3] eq "LYS" &&  $params2[2] eq "NZ")) && $params2[4] != ($params[4]+1)) { 
                     $dx = ($params[5] - $params2[5]);
@@ -68,6 +70,7 @@ while ($file = readdir(DH)) {
 		if(($params[2] =~ /NH[12]/ && $params[3] eq "ARG" ) || ( $params[3] eq "LYS" &&  $params[2] eq "NZ") ) {
 			$pos = tell(FH);
 			while($line = readline(FH)) {
+				$line = checkline($line);
 				@params2 = split(/\s+/, $line);
 				if ((($params2[2] eq "CG" && $params2[3] eq "ASP") || ($params2[2] eq "CD" && $params2[3] eq "GLU" ))  && $params2[4] != ($params[4] +1)) {
 					$dx = ($params[5] - $params2[5]);
@@ -106,4 +109,15 @@ for ($i = 0; $i < @pairs; $i++) {
 }
 for ($i = 0; $i < @pairs; $i++) {
 	print "\@ sort s$i X ascending\n";
+}
+sub checkline {
+	my $orig=$_[0];
+	my @fields;
+	@fields = split(/\s+/, $orig);
+	if($fields[4] !~ /[0-9]+/) {
+		$orig =~ s/\s+$fields[5]\s+/ $fields[5]$fields[4] /;
+		$orig =~ s/ $fields[4] / /;
+	}
+	print "fixed? $orig\n";
+	return($orig);
 }

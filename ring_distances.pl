@@ -29,6 +29,7 @@ while ($file = readdir(DH)) {
 	}
 	seek(FH, 0, 0);
 	while($line = readline(FH)) {
+		$line = checkline($line);
 		@params = split(/\s+/, $line);
 		if ($params[3] eq "PHE" || $params[3] eq "TYR" ||$params[3] eq "TRP"  ||$params[3] eq "ILE" ||$params[3] eq "HIS") { # || $params[3] eq "GLY") {
 			#Found an aromatic/ aliphatic residue.
@@ -36,6 +37,7 @@ while ($file = readdir(DH)) {
 			#	print "$params[3]-$params[4] : @coords\n";
 			$pos_new = tell(FH);
 			while ($line = readline(FH)) {
+				$line = checkline($line);
 				@params2 = split(/\s+/, $line);
 				if (($params2[3] eq "PHE" || $params2[3] eq "TYR" ||$params2[3] eq "TRP"  ||$params2[3] eq "ILE" || $params2[3] eq "HIS") && ($params2[4] > ($params[4]+1))) {#|| $params2[3] eq "GLY") {
 					@coords2 = find_center($line);
@@ -109,6 +111,7 @@ sub find_center
 			$n++;
 		}
 		$line = readline(FH);
+		$line = checkline($line);
 		@par = split(/\s+/, $line);
 		
 	}
@@ -121,4 +124,15 @@ sub find_center
 	return(@ret);
 	
 	
+}
+sub checkline {
+	my $orig=$_[0];
+	my @fields;
+	@fields = split(/\s+/, $orig);
+	if($fields[4] !~ /[0-9]+/) {
+		$orig =~ s/\s+$fields[5]\s+/ $fields[5]$fields[4] /;
+		$orig =~ s/ $fields[4] / /;
+	}
+	print "fixed? $orig\n";
+	return($orig);
 }
