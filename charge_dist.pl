@@ -118,6 +118,5 @@ sub checkline {
 		$orig =~ s/\s+$fields[5]\s+/ $fields[5]$fields[4] /;
 		$orig =~ s/ $fields[4] / /;
 	}
-	print "fixed? $orig\n";
 	return($orig);
 }
