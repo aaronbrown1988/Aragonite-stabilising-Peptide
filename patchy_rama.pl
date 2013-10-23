@@ -23,6 +23,7 @@ while ($line = readline(FH)) {
 	if ($line =~ /^[#@].*/) {
 		next;
 	}
+	$line =~ s/^\s+//; 
 	($x, $y, $type) = split(/\s+/, $line);
 	if (in_alpha_i($x,$y)) {
 		$alpha_i++;
