@@ -4,7 +4,6 @@ my @prev;
 my $time = 0;
 my $curr = 0;
 my $n=0;
-my $life = 0;
 my @accepted;
 push(@prev, -1);
 open (FH, $ARGV[0]) || die "couldn't open $ARGV[0]\n";
@@ -26,18 +25,8 @@ while ($line = readline(FH)) {
 		next;
 	}
 	($throw, $time, $curr) = split(/\s+/, $line);
-	if ($clust != $curr) {
-		if($life >= 2 && !existing($clust)) {
-			push(@accepted, $clust);
-			$n++;
-		}
-	$life = 1;
-	$clust = $curr;
 	$prev[$curr] ++;
-	} else {
-		$life++;
-	}
-	if($prev[$curr] > 1 && !existing($curr)) {
+	if($prev[$curr] > 5 && !existing($curr)) {
 		push(@accepted, $curr);
 		$n++;
 	}	
