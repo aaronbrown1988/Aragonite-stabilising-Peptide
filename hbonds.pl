@@ -20,7 +20,7 @@ while ($file = readdir(DH)) {
 for($I=0; $I < @files; $I++) {
 		$file = $files[$I];
 		process($file);
-	#		if ($file >=  100) { last;}
+#		if ($I >=  100) { last;}
 #		last;
 		#exit;
 }
@@ -262,15 +262,29 @@ sub coarse_sum
 
 		$throw[1] = $throw[0];
 		$throw[3] = $throw[2];
+		$throw[1] =~ s/[A-Z]{3}//;
+		$throw[3] =~ s/[A-Z]{3}//;
+		
+		$chain[0] = $throw[1];
+		$chain[1] = $throw[3];
+		$chain[0] =~ s/[0-9]+//;
+		$chain[1] =~ s/[0-9]+//;
+
 		$throw[1] =~ s/[A-Z]+//;
 		$throw[3] =~ s/[A-Z]+//;
-		if ($throw[1] <= $throw[3]) {
-			$line = "$throw[0] $throw[2]";
-		} else {
+		if ($chain[0] eq $chain[1]) {
+			if ($throw[1] <= $throw[3]) {
+				$line = "$throw[0] $throw[2]";
+			} else {
+				$line = "$throw[2] $throw[0]";
+			}
+		}elsif ($chain[0] > $chain[1])  {
 			$line = "$throw[2] $throw[0]";
+		} else {
+			$line = "$throw[0] $throw[2]";
 		}
 
-		#print "$pairs[$i]: @throw = $line\n";
+		print STDERR "$pairs[$i]: @throw = $line $summary[$i]\n";
 		$sum{$line} += $summary[$i];
 	}
 	@sum_pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
