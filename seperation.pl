@@ -12,7 +12,19 @@ my $done :shared;
 my @avg_frames :shared;
 my @min_frames :shared;
 my %region :shared;
+my @residue :shared;
+my %residue_pairs :shared;
 
+
+for ($i = 0; $i <= 30; $i++) {
+	for ($j = $i; $j <= 30; $j ++ ) {
+		$residue_pairs{"$i $j"} = 0;
+	}
+}
+
+for ($i =0; $i <= 30; $i++) {
+	$residue[$i] = 0;
+}
 
 for ($i = 0; $i < 60; $i++ ) {
 	$hist[$i] = 0;
@@ -88,8 +100,25 @@ foreach $_ (keys(%region)) {
 	print LOG "$_\t$region{$_}\n";
 }
 
-
 close(LOG);
+
+open(R_HIST, ">residue_hist.xvg") || die " Couldn't open residue_hist.xvg\n";
+for ($i = 0; $i < @residue; $i++) {
+	print R_HIST "$i\t$residue[$i]\n";
+}
+close(R_HIST);
+
+
+open (R_PAIR, ">residue_pairs.tsv") || die "Couldn't open residue_pairs.tsv\n";
+     
+foreach $a (keys(%residue_pairs)) {
+	if ($residue_pairs{$a} != 0) {
+		print R_PAIR "$a,\t$residue_pairs{$a}\n";
+	}
+}
+close(R_PAIR);
+		
+
 
 
 sub process
@@ -161,15 +190,31 @@ sub process
 
 				if ($amin > $dist) {
 					$amin = $dist;
+					$min_r2 = $params2[5];
 				}
 			}
 			if ($min > $amin) {
 				$min = $amin;
 				$min_r1 = $params[5];
-				$min_r2 = $params2[5];
 			}
 			$avg += $amin;
 		}
+
+		#Residue Hist
+		{lock (@residue);
+			$residue[$min_r1] = $residue[$min_r1]+1;
+			$residue[$min_r2] = $residue[$min_r2]+1;
+		}
+		# Residue Pairings
+		if ($min_r1 <= $min_r2) {
+			lock (%residue_pairs);
+			$residue_pairs{"$min_r1 $min_r2"} ++;
+		} else {
+			lock (%residue_pairs);
+			$residue_pairs{"$min_r2 $min_r1"}++;
+		}
+
+		#Region distribution
 		if ($min_r1 < 8 ) {
 			$min_r1 = 1;
 		} elsif($min_r1 > 16) {
@@ -194,6 +239,8 @@ sub process
 		{lock(%region);
 			$region{"$min_r1 $min_r2"} ++; }
 		
+
+		#Average backbone distance Histogram
 		$min = floor($min);
 		$min = ($min > 59)? 59:$min;
 		if ($n != 0 ) {
@@ -203,12 +250,16 @@ sub process
 			$avg[$avg]++; 
 		}
 		
+		#average distance frame list
 		{lock (@avg_frames); $avg_frames[$avg] = "$avg_frames[$avg] $l";}
-		
+		#Min distance frame list
 		{lock (@min_frames); $min_frames[$min] = "$min_frames[$min] $l";}
 		
+
+		#Minimum distance Histogram
 		{lock(@hist);
 		$hist[$min]++; }
+
 		undef(@buff);
 		print "\b" x length($progress);
 		$done++;
