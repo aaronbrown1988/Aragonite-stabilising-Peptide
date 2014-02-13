@@ -110,8 +110,11 @@ close(R_HIST);
 
 
 open (R_PAIR, ">residue_pairs.tsv") || die "Couldn't open residue_pairs.tsv\n";
-     
-foreach $a (keys(%residue_pairs)) {
+ 
+@order = sort {$residue_pairs{$b} <=> $residue_pairs{$a}} keys %residue_pairs;
+
+for ($i = 0; $i < @order; $i++) {
+	$a = $order[$i];
 	if ($residue_pairs{$a} != 0) {
 		print R_PAIR "$a,\t$residue_pairs{$a}\n";
 	}
