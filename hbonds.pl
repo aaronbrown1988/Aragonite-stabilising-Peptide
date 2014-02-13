@@ -31,6 +31,7 @@ coarse_sum();
 BB_sum();
 SCSC_sum();
 SCB_sum();
+HB_table();
 print <<END;
 @ s0 legend "# bonds"
 @ s0 hidden false
@@ -284,7 +285,7 @@ sub coarse_sum
 			$line = "$throw[0] $throw[2]";
 		}
 
-		print STDERR "$pairs[$i]: @throw = $line $summary[$i]\n";
+#		print STDERR "$pairs[$i]: @throw = $line $summary[$i]\n";
 		$sum{$line} += $summary[$i];
 	}
 	@sum_pairs = sort { $sum{$b} <=> $sum{$a} } keys %sum;
@@ -329,11 +330,34 @@ sub BB_sum
 	for ($i = 0; $i < @pairs; $i++) {
 		@params = split(/[: -]+/, $pairs[$i]);
 		if (($params[1] =~ /(CA|N|C|O|NT)\b/) && ($params[3] =~ /(CA|C|N|O|NT)\b/)) {
-			if( $sum{"$params[0] $params[2]"} == undef) {
-				 $sum{"$params[0] $params[2]"} = 0;
+			$params[1] = $params[0];
+			$params[3] = $params[2];
+			$params[1] =~ s/[A-Z]{3}//;
+			$params[3] =~ s/[A-Z]{3}//;
+		
+			$chain[0] = $params[1];
+			$chain[1] = $params[3];
+			$chain[0] =~ s/[0-9]+//;
+			$chain[1] =~ s/[0-9]+//;
+
+			$params[1] =~ s/[A-Z]+//;
+			$params[3] =~ s/[A-Z]+//;
+			if ($chain[0] eq $chain[1]) {
+				if ($params[1] <= $params[3]) {
+					$line = "$params[0] $params[2]";
+				} else {
+					$line = "$params[2] $params[0]";
+				}
+			}elsif ($chain[0] > $chain[1])  {
+				$line = "$params[2] $params[0]";
+			} else {
+				$line = "$params[0] $params[2]";
 			}
-			$sum{"$params[0] $params[2]"} += $summary[$i];
-			push(@BB_pairs, "$params[0] $params[2]");
+			if( $sum{$line} == undef) {
+				 $sum{$line} = 0;
+			}
+			$sum{$line} += $summary[$i];
+			push(@BB_pairs, $line);
 		}
 	}
 
@@ -363,8 +387,31 @@ sub SCSC_sum
 			if ( ($params[0] =~ /(ASP|GLU).*/ && $params[3] =~ /(ARG|LYS).*/) || ($params[3] =~ /(ASP|GLU).*/ && $params[0] =~ /(ARG|LYS).*/)) {
 				next;
 			}
-			$sum{"$params[0] $params[2]"} += $summary[$i];
-			push(@SCSC_pairs, "$params[0] $params[2]");
+			$params[1] = $params[0];
+			$params[3] = $params[2];
+			$params[1] =~ s/[A-Z]{3}//;
+			$params[3] =~ s/[A-Z]{3}//;
+		
+			$chain[0] = $params[1];
+			$chain[1] = $params[3];
+			$chain[0] =~ s/[0-9]+//;
+			$chain[1] =~ s/[0-9]+//;
+
+			$params[1] =~ s/[A-Z]+//;
+			$params[3] =~ s/[A-Z]+//;
+			if ($chain[0] eq $chain[1]) {
+				if ($params[1] <= $params[3]) {
+					$line = "$params[0] $params[2]";
+				} else {
+					$line = "$params[2] $params[0]";
+				}
+			}elsif ($chain[0] > $chain[1])  {
+				$line = "$params[2] $params[0]";
+			} else {
+				$line = "$params[0] $params[2]";
+			}
+			$sum{$line} += $summary[$i];
+			push(@SCSC_pairs, $line);
 		}
 
 	}
@@ -393,8 +440,31 @@ sub SCB_sum
 		@params = split(/[: -]+/, $pairs[$i]);
 
 		if (($params[1] =~ /^(CA|N|C|O|NT)\b/ && ($params[3] !~ /^(CA|C|N|O|NT)\b/)) || (($params[3] =~ /(CA|C|N|O|NT)\b/) && ($params[1] !~ /(CA|C|N|O|NT)\b/))) {
-			$sum{"$params[0] $params[2]"} += $summary[$i];
-			push(@SCB_pairs, "$params[0] $params[2]");
+			$params[1] = $params[0];
+			$params[3] = $params[2];
+			$params[1] =~ s/[A-Z]{3}//;
+			$params[3] =~ s/[A-Z]{3}//;
+		
+			$chain[0] = $params[1];
+			$chain[1] = $params[3];
+			$chain[0] =~ s/[0-9]+//;
+			$chain[1] =~ s/[0-9]+//;
+
+			$params[1] =~ s/[A-Z]+//;
+			$params[3] =~ s/[A-Z]+//;
+			if ($chain[0] eq $chain[1]) {
+				if ($params[1] <= $params[3]) {
+					$line = "$params[0] $params[2]";
+				} else {
+					$line = "$params[2] $params[0]";
+				}
+			}elsif ($chain[0] > $chain[1])  {
+				$line = "$params[2] $params[0]";
+			} else {
+				$line = "$params[0] $params[2]";
+			}
+			$sum{$line} += $summary[$i];
+			push(@SCB_pairs, $line);
 		}
 
 	}
@@ -411,3 +481,84 @@ sub SCB_sum
 	close(SCB);
 
 }
+
+
+sub HB_table
+{
+	open(TAB, ">table.tex" ) || die " Couldn't open table.tex for writing";
+	print TAB "\\begin\{tabular\}\{l|c|c|c|c|c\}\n";
+	print TAB " Residue & total & BB & SB && SS \\\\\n";
+	my %SCB_pairs;
+	my %total_pairs;
+	my %BB_pairs;
+	my %SCSC_pairs;
+	my @total;
+	for ($i = 0; $i < @pairs; $i++) {
+		@params = split(/[:-\s]+/, $pairs[$i]);
+		$tmp[1] = $params[0];
+		$tmp[3] = $params[2];
+		$tmp[1] =~ s/[A-Z]{3}//;
+		$tmp[3] =~ s/[A-Z]{3}//;
+	
+		$chain[0] = $tmp[1];
+		$chain[1] = $tmp[3];
+		$chain[0] =~ s/[0-9]+//;
+		$chain[1] =~ s/[0-9]+//;
+
+		if ($chain[0] eq $chain[1]) {
+			if ($tmp[1] <= $tmp[3]) {
+				$line = "$params[0] $params[2]";
+			} else {
+				$line = "$params[2] $params[0]";
+			}
+		} elsif ($chain[0] > $chain[1])  {
+			$line = "$tmp[2] $tmp[0]";
+		} else {
+			$line = "$tmp[0] $tmp[2]";
+		}
+		$total_pairs{$line} += $summary[$i];
+		push(@total,$line);
+		#Determine Type
+		if ($params[1] =~ /(CA|N|C|O|NT)\b/) {
+			#Backbone;
+			if($params[3] =~ /(CA|N|C|O|NT)\b/) {
+				$BB_pairs{$line} += $summary[$i];	
+				
+			} else {
+				$SCB_pairs{$line} += $summary[$i];
+			}
+		} else {
+			if($params[3] =~ /(CA|N|C|O|NT)\b/) {
+				$SCB_pairs{$line} += $summary[$i];
+		
+			} else {
+				$SCSC_pairs{$line} += $summary[$i];
+			}
+		}
+	}
+	
+	for ($i = 0; $i < @total; $i++) {
+		
+	}
+
+	@total = sort{ $total_pairs{$b} <=> $total_pairs{$a} } keys %total_pairs;
+	for ($i = 0; $i < @total; $i++) {
+		$a = $total[$i];
+		$total_pairs{$a} /= (scalar(@files)/100);
+		$BB_pairs{$a} /= (scalar(@files)/100);
+		$SCB_pairs{$a} /= (scalar(@files)/100);
+		$SCSC_pairs{$a} /= (scalar(@files)/100);
+		printf TAB "%s & %2.2f & %2.2f & %2.2f & %2.2f \\\\\n" ,$total[$i] , $total_pairs{$a} , $BB_pairs{$a} , $SCB_pairs{$a} , $SCSC_pairs{$a};
+	}
+
+	print TAB '\end{tabular}';
+	print TAB "\n";
+	
+	close(TAB);
+
+
+
+}	
+
+
+
