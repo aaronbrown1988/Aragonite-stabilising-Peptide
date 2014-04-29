@@ -1,4 +1,19 @@
 #!/usr/bin/perl
+#
+# Processess rmsd-clust.xpm
+# USAGE rmsd-clust.xpm A B  cutoff
+# 
+# Returns the following in order:
+# Returns A,B and B,A for RMSD choose smaller.
+# Then lists frames deemed to be in the same cluster as A from the bottom right of matrix.
+# Then calculated the neighbours for each frame from the top left of the matirx using cut-off.
+# Lists top 10 frames by neighbours.
+# Count for frame A.
+# Lists frames that should be in top cluster as determined from top right.
+# Exists
+#
+
+
 
 
 open (FH, $ARGV[0]) || die "$!";
@@ -30,7 +45,7 @@ while ($line = readline(FH)) {
 }
 $line =~ s/\"//g;
 push(@matrix, $line);
-print "$matrix[0]";
+#print "$matrix[0]";
 
 for ($i = 1; $i < $size; $i++) {
 	if (eof(FH)) {
