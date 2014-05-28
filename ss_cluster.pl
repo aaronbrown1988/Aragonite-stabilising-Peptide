@@ -3,7 +3,7 @@
 # Groups frames based on dssp data
 #
 
-$start_res =0;
+$start_res=0;
 
 if($ARGV != undef) { 
 	$start_res = $ARGV[1];
@@ -72,6 +72,10 @@ open(LOG, ">cluster.log");
 
 $n_clusters = scalar(@order);
 print LOG "Found $n_clusters\n";
+print LOG "KEY:\n";
+foreach $a (keys(%colors)) {
+	print LOG "$a\t $colors{$a}\n";
+}
 print LOG "\n\n\n";
 print LOG "-"x80;
 print LOG "\nID\t #sturctures \t | secondary Structure \t | Frames\n";
