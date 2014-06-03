@@ -9,6 +9,7 @@ my @bonds = qw();
 my @summary = qw();
 my $npairs=-1;
 $folder = $ARGV[0];
+#my $sep_chains = ($ARGV[1] == undef)? 0:1
 opendir(DH, "$ARGV[0]") || die "couldn't open $ARGV[0]: $!\n";
 open(BD, ">Bond_data.dat");
 while ($file = readdir(DH)) {
@@ -21,8 +22,6 @@ for($I=0; $I < @files; $I++) {
 		$file = $files[$I];
 		process($file);
 #		if ($I >=  100) { last;}
-#		last;
-		#exit;
 }
 closedir(DH);
 #bond_data();
@@ -73,7 +72,7 @@ sub process
 		if ($params[4] !~ /[0-9.]+/) {
 			$line =~ s/ $params[4] //;
 			$line =~ s/$params[3]/$params[3]$params[4]/;
-			#print "$line\n";
+#			print "$line\n";
 		}
 		push(@peptide, $line);
 	}
@@ -179,7 +178,7 @@ sub process
 					next;
 				}
 				if (($A[2] !~ /(CA|N|C|O|NT)\b/ && $B[2] !~ /(CA|C|N|O|NT)\b/) && (($A[3] =~ /(ASP|GLU)/ && $B[3] =~ /(LYS|ARG)/) || ($B[3] =~ /(ASP|GLU)/ && $A[3] =~ /(LYS|ARG)/)) ) {
-					next;
+#					next;
 				}
 				#print "$A[1] $C[1] $B[1] $theta\n";
 				@bonds[@pairs-1] = -1;
@@ -504,17 +503,19 @@ sub HB_table
 		$chain[1] = $tmp[3];
 		$chain[0] =~ s/[0-9]+//;
 		$chain[1] =~ s/[0-9]+//;
-
+		
+		# Keep the chains the right way round
 		if ($chain[0] eq $chain[1]) {
+			#Same chain Sort by residue
 			if ($tmp[1] <= $tmp[3]) {
 				$line = "$params[0] $params[2]";
 			} else {
 				$line = "$params[2] $params[0]";
 			}
 		} elsif ($chain[0] > $chain[1])  {
-			$line = "$tmp[2] $tmp[0]";
+			$line = "$params[2] $params[0]";
 		} else {
-			$line = "$tmp[0] $tmp[2]";
+			$line = "$params[0] $params[2]";
 		}
 		$total_pairs{$line} += $summary[$i];
 		push(@total,$line);
