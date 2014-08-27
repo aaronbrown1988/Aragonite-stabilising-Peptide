@@ -3,7 +3,7 @@
 # Due to genconf sucking. I've rewritten this to take into account chains
 # Once and for all.
 # CAVEAT: Assumes chains direction is Z
-# usage unit.pdb X Y Z 
+# usage unit.pdb X Y Z ALT 
 
 $iCurChain = 1;
 $iCurRes = 1;
@@ -104,7 +104,7 @@ sub rep
 				
 			}
 			if($alt ==1 && !(((-1)**$iCurChain) < 0)) {
-				$curRes++;
+			#	$curRes++;
 			}
 			if ($alt != 1) {
 				$curRes++;
