@@ -220,17 +220,22 @@ sub process
 		#Region distribution
 		if ($min_r1 < 8 ) {
 			$min_r1 = 1;
-		} elsif($min_r1 > 16) {
-			$min_r1 = 3;
-		}else {
+		} elsif($min_r1 <= 16) {
 			$min_r1 = 2;
+		} elsif($min_r1 <= 23) {
+			$min_r1 = 3;
+		} else {
+			$min_r1= 4;
 		}
+
 		if ($min_r2 < 8 ) {
 			$min_r2 = 1;
-		} elsif($min_r2 > 16) {
-			$min_r2 = 3;
-		}else {
+		} elsif($min_r2 <= 16) {
 			$min_r2 = 2;
+		} elsif($min_r2 <= 23) {
+			$min_r2 = 3;
+		} else {
+			$min_r2= 4;
 		}
 
 
