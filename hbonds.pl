@@ -178,7 +178,7 @@ sub process
 					next;
 				}
 				if (($A[2] !~ /(CA|N|C|O|NT)\b/ && $B[2] !~ /(CA|C|N|O|NT)\b/) && (($A[3] =~ /(ASP|GLU)/ && $B[3] =~ /(LYS|ARG)/) || ($B[3] =~ /(ASP|GLU)/ && $A[3] =~ /(LYS|ARG)/)) ) {
-#					next;
+					next;
 				}
 				#print "$A[1] $C[1] $B[1] $theta\n";
 				@bonds[@pairs-1] = -1;
