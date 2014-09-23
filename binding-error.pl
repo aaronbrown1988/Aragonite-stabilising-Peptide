@@ -37,6 +37,8 @@ for ($i = 0; $i < $numbrellas; $i++) {
 	$n= 0;
 	$avg=0;
 	$avg2=0;
+	$nblocks = 0;
+	$ba = 0;
 	while ($line = readline(FH)) {
 		
 		if ($line =~ /^[@#;].*/) {
@@ -45,21 +47,36 @@ for ($i = 0; $i < $numbrellas; $i++) {
 		$line =~ s/^\s+//;
 		@params = split(/\s+/, $line);
 		if ($params[0] <500) {next;}
-		#Given these are corrolated samples, this should be a block avg
-		$avg += $params[1];
-		$avg2 += $params[1] * $params[1];
+		$ba += $params[1];
 		$n++;
+		if ($n == 1000) {
+			$ba = $ba/$n;
+			$avg += $ba;
+			$avg2 += $ba * $ba;
+			$nblocks++;
+			$n = 0;
+			$ba = 0;
+		}
 	}
-	$avg = $avg*$avg;
-	$avg = $avg/$n;
 
-	$var = ($avg2 - $avg)/($n-1);
+	# Add in last block	
+	$ba = $ba/$n;
+	$avg += $ba;
+	$avg2 += $ba * $ba;
+	$nblocks++;
+
+	$avg2 = $avg2/$nblocks;	
+
+	$avg = $avg/$nblocks;
+	$avg = $avg*$avg;
+
+	$var = ($avg2 - $avg)/($nblocks-1);
 	push(@vars, $var);
 	close(FH);
 
 	$ignore = 0;
 	# Now read in the X value and Kb;
-	open (FH, "$ARGV[0]/$umbrellas[$i]/umbrella.mdp") || $ignore == 1;
+	open (FH, "$ARGV[0]/$umbrellas[$i]/umbrella.mdp") || {$ignore = 1};
 	$x = 9e99;
 	$k = 9e99;
 	while ($line = readline(FH) && $ignore != 1) {
@@ -89,7 +106,7 @@ for ($j = 4; $j < 12; $j ++) {
 		$sum += $vars[$i];
 	}
 	if ($defaults == 1) {
-		$sum = $sum * (0.1)**2;
+		$sum = $sum * (0.2)**2;
 	} else {
 		$sum = $sum * (0.1)**2;
 	}
