@@ -19,6 +19,7 @@ while ($line = readline(FH)) {
 	if ($line =~ /^[#@].*/) {
 		next;
 	}
+	$line = s/\s+//;
 	@params = split(/\s+/, $line);
 	$start_i = (floor($params[0]+0.5) == $start)? $n:$start_i;
 	$end_i = (floor($params[0]+0.5) == $end)? $n:$end_i;
