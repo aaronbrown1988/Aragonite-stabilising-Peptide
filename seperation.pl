@@ -35,9 +35,19 @@ for ($i = 0; $i < 60; $i++ ) {
 $region{'1 1'} = 0;
 $region{'1 2'} = 0;
 $region{'1 3'} = 0;
+$region{'1 4'} = 0;
+$region{'2 1'} = 0;
 $region{'2 2'} = 0;
 $region{'2 3'} = 0;
+$region{'2 4'} = 0;
+$region{'3 1'} = 0;
+$region{'3 2'} = 0;
 $region{'3 3'} = 0;
+$region{'3 4'} = 0;
+$region{'4 1'} = 0;
+$region{'4 2'} = 0;
+$region{'4 3'} = 0;
+$region{'4 4'} = 0;
 
 
 opendir(DH, "$ARGV[0]") || die "Couldn't open $ARGV[0] to read files: $!\n";
@@ -166,7 +176,7 @@ sub process
 		$min = 1e99;
 		for ($j = 0; $j < 511; $j++) {
 			@params = split(/\s+/, $buff[$j]);
-			if ($params[2] !~ /\b(CA|C|N|O|)\b/) {
+			if ($params[2] !~ /\b(CA|C|N)\b/) {
 				next;
 			}
 			$n++;
@@ -174,7 +184,7 @@ sub process
 			for ($k=511; $k < scalar(@buff); $k++) {
 				@params2 = split(/\s+/, $buff[$k]);
 				
-				if ($params2[2] !~ /\b(CA|C|N|O|)\b/) {
+				if ($params2[2] !~ /\b(CA|C|N)\b/) {
 					next;
 				}
 				$dx = $params[6] - $params2[6];
@@ -201,6 +211,9 @@ sub process
 				$min_r1 = $params[5];
 			}
 			$avg += $amin;
+		}
+		if ($min > 6) {
+			next;
 		}
 
 		#Residue Hist
@@ -239,11 +252,11 @@ sub process
 		}
 
 
-		if ($min_r2 < $min_r1) {
-			$j = $min_r1;
-			$min_r1 = $min_r2;
-			$min_r2 = $j;
-		}
+#		if ($min_r2 < $min_r1) {
+#			$j = $min_r1;
+#			$min_r1 = $min_r2;
+#			$min_r2 = $j;
+#		}
 		{lock(%region);
 			$region{"$min_r1 $min_r2"} ++; }
 		
