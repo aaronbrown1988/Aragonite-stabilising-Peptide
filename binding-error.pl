@@ -46,14 +46,17 @@ for ($i = 0; $i < $numbrellas; $i++) {
 		}
 		$line =~ s/^\s+//;
 		@params = split(/\s+/, $line);
-		if ($params[0] <500) {next;}
+		if ($params[0] <1000) {next;}
 		$ba += $params[1];
 		$n++;
-		if ($n == 1000) {
+		if ($n == 500000) {
 			$ba = $ba/$n;
-			$avg += $ba;
-			$avg2 += $ba * $ba;
 			$nblocks++;
+#$avg += $ba;
+#			$avg2 += $ba * $ba;
+			$delta = $ba - $avg;
+			$avg = $avg + $delta/$nblocks;
+			$avg2 = $avg2 + $delta*($ba-$avg);
 			$n = 0;
 			$ba = 0;
 		}
@@ -61,16 +64,22 @@ for ($i = 0; $i < $numbrellas; $i++) {
 
 	# Add in last block	
 	$ba = $ba/$n;
-	$avg += $ba;
-	$avg2 += $ba * $ba;
+#	$avg += $ba;
+#	$avg2 += $ba * $ba;
 	$nblocks++;
+	
+	#Wiki Single pass
+	$delta = $ba - $avg;
+	$avg = $avg + $delta/$nblocks;
+	$avg2 = $avg2 + $delta*($ba-$avg);
 
-	$avg2 = $avg2/$nblocks;	
+#	$avg2 = $avg2/$nblocks;	
 
-	$avg = $avg/$nblocks;
-	$avg = $avg*$avg;
+#	$avg = $avg/$nblocks;
+#	$avg = $avg*$avg;
 
-	$var = ($avg2 - $avg)/($nblocks-1);
+#	$var = ($avg2 - $avg);#/($nblocks-1);
+	$var = $avg2/($nblocks-1);
 	push(@vars, $var);
 	close(FH);
 
@@ -95,12 +104,13 @@ for ($i = 0; $i < $numbrellas; $i++) {
 	}
 	push(@X, $x);
 	push(@K, $k);
-	print STDERR "$umbrellas[$i], $x, $k $var\n";
+#	print STDERR "$umbrellas[$i], $x, $k $var\n";
 
 
 }
 
-for ($j = 4; $j < 12; $j ++) {
+$j = $ARGV[1];
+#for ($j = 4; $j < 12; $j ++) {
 	$sum = ($vars[2] + $vars[$j])/4;
 	for ($i = 3; $i < $j; $i++) {
 		$sum += $vars[$i];
@@ -111,10 +121,11 @@ for ($j = 4; $j < 12; $j ++) {
 		$sum = $sum * (0.1)**2;
 	}
 	$error = sqrt ($sum);
-	print "2-$j  var: $sum  ";
-	print "std dev.: $error\n";
-}
+	print STDERR "2-$j  var: $sum  ";
+	print STDERR "std dev.: $error\n";
+#}
 
+print "$error\n";
 
 
 
