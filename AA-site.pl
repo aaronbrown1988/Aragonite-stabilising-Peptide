@@ -7,6 +7,8 @@
 use Math::Vector::Real;
 use POSIX;
 my @hist;
+my @histX;
+my @histY;
 my %interaction;
 my %sites = (
 		ALA => 'CB',
@@ -30,7 +32,7 @@ my %sites = (
 		TYR => 'COM',
 		VAL => 'CB'
 		);
-for ($i = 0; $i <=180; $i++) { $hist[$i]=0;}
+for ($i = 0; $i <=180; $i++) { $hist[$i]=0; $histY[$i]=0; $histX[$i]=0;}
 
 opendir(DH, "$ARGV[0]") || die "couldn't open $ARGV[0]:$! \n";
 while ($file = readdir(DH)) {
@@ -108,14 +110,33 @@ sub process {
 	$EV = V($ep[0], $ep[1], $ep[2]);
 	$CaV = V($ca[0], $ca[1], $ca[2]);
 	$a = $CaV - $EV;
+	print AT "$filename\t";
+	# Dot product with the chain direction.
 	$dot = $a * V(0,0,1);
 	$dot = acos($dot / abs($a));
 	$dot = $dot * 57.3;
 	$filename =~ s/\.pdb//;
-	print AT "$filename $dot\n";
+	print AT "$dot\t";
 	$dot = floor($dot+ 0.5);
 	$hist[$dot] ++;
 	#print STDERR "$filename $dot \n";
+	#dot production with the 100 direction
+	# Dot product with the chain direction.
+	$dot = $a * V(1,0,0);
+	$dot = acos($dot / abs($a));
+	$dot = $dot * 57.3;
+	$filename =~ s/\.pdb//;
+	print AT "$dot\t";
+	$dot = floor($dot+ 0.5);
+	$histX[$dot] ++;
+	#dot production with the 010 direction
+	$dot = $a * V(0,1,0);
+	$dot = acos($dot / abs($a));
+	$dot = $dot * 57.3;
+	$filename =~ s/\.pdb//;
+	print AT "$dot\n";
+	$dot = floor($dot+ 0.5);
+	$histY[$dot] ++;
 
 	# Loop through and find the closest atom
 	my $mindist = 9e99;
@@ -168,6 +189,8 @@ close(OF);
 open (OF, ">$ARGV[1]-hist.tsv");
 for($i = 0; $i <=180; $i++) {
 	$hist[$i] /= scalar(@files);
-	print OF "$i\t $hist[$i]\n";
+	$histX[$i] /= scalar(@files);
+	$histY[$i] /= scalar(@files);
+	print OF "$i\t $hist[$i]\t$histX[$i]\t$histY[$i]\n";
 }
 close(OF);
