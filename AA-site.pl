@@ -194,3 +194,10 @@ for($i = 0; $i <=180; $i++) {
 	print OF "$i\t $hist[$i]\t$histX[$i]\t$histY[$i]\n";
 }
 close(OF);
+$up = 0;
+for ($i = 0; $i < 90; $i++) {
+	$up += $hist[$i];
+}
+$up /= scalar(@files);
+print "Up: $up\n";
+
