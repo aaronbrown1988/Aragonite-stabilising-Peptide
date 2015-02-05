@@ -9,7 +9,7 @@ while ($line = readline(FH)) {
 		$b = $params[2];
 		$c = $params[3];
 		$g = 180 - $params[6];
-		$line = sprintf("%-7s %7.3f %7.3f %7.3f %7.2f %7.2f %7.2f %s %10s %s", 'CRYST1', $a+cos($g), $b*sin($g), $c, 90, 90, 90, 'P', '1', '1');
+		$line = sprintf("%-7s %7.3f %7.3f %7.3f %7.2f %7.2f %7.2f %s %10s %s", 'CRYST1', $a-$b*cos($g), $b-$b*sin($g), $c, 90, 90, 90, 'P', '1', '1');
 		print "$line\n";
 		next;
 	}
