@@ -8,9 +8,10 @@
 # OUTPUT FIELD.frag
 # 
 #
-# Caveats:Just format conversion, Uses GMX units currently
+# Caveats: Doesn't build LJ interactions
 
 my $natoms = 0;
+
 
 open(IN, "$ARGV[0]") || die "Couldn't open $ARGV[0]: $!\n";
 
@@ -87,6 +88,16 @@ for ($i = ($find+$natoms+1); $i < ($find +2*$natoms+1); $i++) {
 	push(@atname, $line);
 }
 
+#Read in atom types
+$find = $find +2*$natoms+2;
+for($i = $find; $i < ($find +$natoms);$i++) {
+	$line = $buf[$i];
+	$line =~ s/.*name=\"//;
+	$line =~ s/\".*//;
+	chomp($line);
+	push(@attype,$line);
+}
+
 #
 # Output Atoms in the molecule
 for ($i = 0; $i < $natoms; $i++) {
@@ -99,7 +110,8 @@ for ($i = 0; $i < $natoms; $i++) {
 	chomp($q);
 	chomp($mass);
 
-	print OUT "\t$atname[$i]\t$mass\t$q\n";
+	print OUT "\t$attype[$i]\t$mass\t$q\n";
+	#print OUT "\t$atname[$i]\t$mass\t$q\n";
 }
 
 undef @at;
@@ -113,12 +125,13 @@ undef @atname;
 $nbonds = 0;
 for ($i= 0; $i < scalar(@buf); $i++) {
 	if ($buf[$i] =~ /.*Bond:.*/) {
-		$nbonds = $buf[$i+1];
-		$nbonds =~ s/.*nr..//;
-		chomp($nbonds);
 		$find = $i+3;
 		last;
 	}
+}
+for($i=$find; $i<scalar(@buf); $i++) {
+	if ($buf[$i] !~ /.*BOND.*/) { last;}
+	$nbonds++;
 }
 #
 # Process bonds and write them out.
@@ -140,38 +153,36 @@ for ($i=$find; $i < scalar(@buf); $i++ ){
 	$b0 = $type;
 	$b0 =~ s/.*b0A=//;
 	$b0 =~ s/,.*//;
+	$b0 *= 10;
 	$cb = $type;
 	$cb =~ s/.*cbA=//;
 	$cb =~ s/,.*//;
+	$cb *= 1e-4;
 	$params[3]++;
 	$params[4]++;
 	print OUT "harm\t$params[3]\t$params[4]\t$b0\t$cb\n";
-
-
-
 }	
-
 
 #
 # Angles
 #
-
 #Find Angles and get total number 
 $nangles = 0;
 for ($i= 0; $i < scalar(@buf); $i++) {
 	if ($buf[$i] =~ /.*Angle:.*/) {
-		$nangles = $buf[$i+1];
-		$nangles =~ s/.*nr..//;
-		chomp($nangles);
 		$find = $i+3;
 		last;
 	}
+}
+for($i=$find; $i<scalar(@buf); $i++) {
+	if ($buf[$i] !~ /.*ANGLES.*/) { last;}
+	$nangles++;
 }
 #
 # Process Angles and write them out.
 #
 # I'm assuming cosine
-print OUT "ANGLES \t $nbonds\n";
+print OUT "ANGLES \t $nangles\n";
 for ($i=$find; $i < scalar(@buf); $i++ ){
 	$line = $buf[$i];
 	$line =~ s/^\s+//;
@@ -190,10 +201,11 @@ for ($i=$find; $i < scalar(@buf); $i++ ){
 	$ct = $type;
 	$ct =~ s/.*ctA=//;
 	$ct =~ s/,.*//;
+	$ct *= 0.01;
 	$params[3]++;
 	$params[4]++;
 	$params[5]++;
-	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$th\t$ct\n";
+	print OUT "harm\t$params[3]\t$params[4]\t$params[5]\t$th\t$ct\n";
 
 
 
@@ -208,18 +220,31 @@ for ($i=$find; $i < scalar(@buf); $i++ ){
 $npdih = 0;
 for ($i= 0; $i < scalar(@buf); $i++) {
 	if ($buf[$i] =~ /.*Proper Dih.:.*/) {
-		$npdih = $buf[$i+1];
-		$npdih =~ s/.*nr..//;
-		chomp($npdih);
 		$find = $i+3;
 		last;
 	}
 }
+for($i=$find; $i<scalar(@buf); $i++) {
+	if ($buf[$i] !~ /.*PDIHS.*/) { last;}
+	$npdih++;
+}
+$nidih = 0;
+for ($i= 0; $i < scalar(@buf); $i++) {
+	if ($buf[$i] =~ /.*Improper Dih.:.*/) {
+		$ifind = $i+3;
+		last;
+	}
+}
+for($i=$ifind; $i<scalar(@buf); $i++) {
+	if ($buf[$i] !~ /.*PIDIHS.*/) { last;}
+	$nidih++;
+}
 #
 # Process Dih and write them out.
 #
-# I'm assuming cosine
-print OUT "DIHEDRALS \t $pdih\n";
+# I'm assuming cos for propers, and cos for impropers
+$total = $npdih + $nidih;
+print OUT "DIHEDRALS \t $total\n";
 for ($i=$find; $i < scalar(@buf); $i++ ){
 	$line = $buf[$i];
 	$line =~ s/^\s+//;
@@ -238,12 +263,45 @@ for ($i=$find; $i < scalar(@buf); $i++ ){
 	$cp = $type;
 	$cp =~ s/.*cpA=//;
 	$cp =~ s/,.*//;
+	$cp *= 0.01;
+	$m= $type;
+	$m =~ s/.*mult=//;
+	$m =~ s/,.*//;
 	$params[3]++;
 	$params[4]++;
 	$params[5]++;
 	$params[6]++;
-	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$params[6]\t$phi\t$cp\n";
+	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$params[6]\t$phi\t$cp\t$m\n";
+}
 
-
+#Impropers
+for ($i=$ifind; $i < scalar(@buf); $i++ ){
+	$line = $buf[$i];
+	$line =~ s/^\s+//;
+	chomp($line);
+	if ($line !~ /.*PIDIHS.*/) {
+		last;
+	}
+	@params = split(/\s+/, $line);
+	$type = $params[1];
+	$type =~ s/.*=//;
+	chomp($type);
+	$type = $func[$type];
+	$phi = $type;
+	$phi =~ s/.*phiA=//;
+	$phi =~ s/,.*//;
+	$cp = $type;
+	$cp =~ s/.*cpA=//;
+	$cp =~ s/,.*//;
+	$cp *= 0.01;
+	$m= $type;
+	$m =~ s/.*mult=//;
+	$m =~ s/,.*//;
+	$params[3]++;
+	$params[4]++;
+	$params[5]++;
+	$params[6]++;
+	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$params[6]\t$phi\t$cp\t$m\n";
 
 }	
+print OUT "FINISH\n";
