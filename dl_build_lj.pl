@@ -64,6 +64,18 @@ while ($line = readline(NB)) {
 	$lj{$params[0]} = "$params[5]\t$params[6]";
 
 }
+close(NB);
+
+#Open Field frag for writing
+open(OUT,">>FIELD.frag") || die " Couldn't open field file for appending; $!\n";
+$n = 0;
+
+#Calculate the number of NB interactions were going to make
+for ($i = 0; $i < scalar(@attypes); $i++ ) {
+	for ($j = $i; $j < scalar(@attypes); $j ++) {
+		$n++;
+}}
+print OUT "VDW $n\n";
 
 for ($i = 0; $i < scalar(@attypes); $i++ ) {
 	for ($j = $i; $j < scalar(@attypes); $j ++) {
@@ -76,8 +88,11 @@ for ($i = 0; $i < scalar(@attypes); $i++ ) {
 		($jsig,$jeps) = split(/\s+/,$lj{$b});
 		$sig = 0.5 *($isig +$jsig);
 		$eps = ($ieps *$jeps)**0.5;
-		print "$attypes[$i]\t$attypes[$j]\t$sig\t$eps\n";
+		print "$attypes[$i]\t$attypes[$j]\tlj\t$sig\t$eps\n";
 	}
 }
+
+print OUT "CLOSE\n";
+close(OUT);
 
 

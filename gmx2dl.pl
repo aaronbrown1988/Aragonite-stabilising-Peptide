@@ -11,7 +11,8 @@
 # Caveats: Doesn't build LJ interactions
 
 my $natoms = 0;
-
+my $QQFUDGE=0.8333;
+my $LJFUDGE=0.5;
 
 open(IN, "$ARGV[0]") || die "Couldn't open $ARGV[0]: $!\n";
 
@@ -301,7 +302,9 @@ for ($i=$ifind; $i < scalar(@buf); $i++ ){
 	$params[4]++;
 	$params[5]++;
 	$params[6]++;
-	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$params[6]\t$phi\t$cp\t$m\n";
+	# This might need some kind of space filling between the params and the fudge factor
+	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$params[6]\t$phi\t$cp\t$m\t$QQFUDGE\t$LJFUDGE\n";
 
 }	
 print OUT "FINISH\n";
+close(OUT);
