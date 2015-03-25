@@ -42,17 +42,26 @@ for ($i = 0; $i < $blocks; $i ++ ) {
 	}
 	if ($k >= $lines ) {
 		$block /= ($j+1);
-		$avg += $block;
-		$err += $block*$block;
+		$delta = $block - $avg;
+		$avg = $avg + $delta/($i+1);
+		#$avg += $block;
+		#$err += $block*$block;
 		next;
 	}
 	$block /= $lb;
-	$avg += $block;
-	$err += $block*$block;
+	$delta = $block - $avg;
+	$avg = $avg + $delta/($i+1);
+	$avg2 = $avg2 +$delta*($block-$avg);
+	#$avg += $block;
+	#$err += $block*$block;
 }
 
-$avg /= $blocks;
-$err /= $blocks;
-$err -= $avg*$avg;
-$err = sqrt($err/($blocks-1));
+$avg2 = $avg2 +$delta*($block-$avg);
+$var = $avg2/($blocks);
+$err = sqrt($var);
+
+#$avg /= $blocks;
+#$err /= $blocks;
+#$err -= $avg*$avg;
+#$err = sqrt($err/($blocks-1));
 print "$avg \t$err\n";
