@@ -56,8 +56,8 @@ for ($i=$find+3; $i < ($find+2+$ntypes); $i++ ) {
 #
 open (OUT, ">FIELD.frag") || die "Couldn't open FIELD.frag:$!\n";
 print OUT "Fragment\n";
-print OUT "NUMMOLS\t 1\n";
-print OUT "ATOMS\t $natoms\n";
+print OUT "NUMMOLS     1\n";
+print OUT "ATOMS     $natoms\n";
 
 #
 # Find atoms and output atoms
@@ -111,8 +111,8 @@ for ($i = 0; $i < $natoms; $i++) {
 	chomp($q);
 	chomp($mass);
 
-	print OUT "\t$attype[$i]\t$mass\t$q\n";
-	#print OUT "\t$atname[$i]\t$mass\t$q\n";
+	print OUT "    $attype[$i]    $mass   $q\n";
+	#print OUT "    $atname[$i]    $mass    $q\n";
 }
 
 undef @at;
@@ -138,7 +138,7 @@ for($i=$find; $i<scalar(@buf); $i++) {
 # Process bonds and write them out.
 #
 # I'm assuming harm
-print OUT "BONDS \t $nbonds\n";
+print OUT "BONDS      $nbonds\n";
 for ($i=$find; $i < scalar(@buf); $i++ ){
 	$line = $buf[$i];
 	$line =~ s/^\s+//;
@@ -161,7 +161,7 @@ for ($i=$find; $i < scalar(@buf); $i++ ){
 	$cb *= 1e-4;
 	$params[3]++;
 	$params[4]++;
-	print OUT "harm\t$params[3]\t$params[4]\t$b0\t$cb\n";
+	print OUT "harm    $params[3]    $params[4]    $cb    $b0\n";
 }	
 
 #
@@ -183,7 +183,7 @@ for($i=$find; $i<scalar(@buf); $i++) {
 # Process Angles and write them out.
 #
 # I'm assuming cosine
-print OUT "ANGLES \t $nangles\n";
+print OUT "ANGLES      $nangles\n";
 for ($i=$find; $i < scalar(@buf); $i++ ){
 	$line = $buf[$i];
 	$line =~ s/^\s+//;
@@ -206,7 +206,7 @@ for ($i=$find; $i < scalar(@buf); $i++ ){
 	$params[3]++;
 	$params[4]++;
 	$params[5]++;
-	print OUT "harm\t$params[3]\t$params[4]\t$params[5]\t$th\t$ct\n";
+	print OUT "harm    $params[3]    $params[4]    $params[5]    $ct    $th\n";
 
 
 
@@ -245,7 +245,7 @@ for($i=$ifind; $i<scalar(@buf); $i++) {
 #
 # I'm assuming cos for propers, and cos for impropers
 $total = $npdih + $nidih;
-print OUT "DIHEDRALS \t $total\n";
+print OUT "DIHEDRALS      $total\n";
 for ($i=$find; $i < scalar(@buf); $i++ ){
 	$line = $buf[$i];
 	$line =~ s/^\s+//;
@@ -272,7 +272,8 @@ for ($i=$find; $i < scalar(@buf); $i++ ){
 	$params[4]++;
 	$params[5]++;
 	$params[6]++;
-	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$params[6]\t$phi\t$cp\t$m\n";
+#print OUT "cos    $params[3]    $params[4]    $params[5]    $params[6]    $phi    $cp    $m\n";
+	print OUT "cos     $params[3]    $params[4]    $params[5]    $params[6]    $cp    $phi    $m    $QQFUDGE    $LJFUDGE\n";
 }
 
 #Impropers
@@ -303,8 +304,64 @@ for ($i=$ifind; $i < scalar(@buf); $i++ ){
 	$params[5]++;
 	$params[6]++;
 	# This might need some kind of space filling between the params and the fudge factor
-	print OUT "cos\t$params[3]\t$params[4]\t$params[5]\t$params[6]\t$phi\t$cp\t$m\t$QQFUDGE\t$LJFUDGE\n";
+	print OUT "cos     $params[3]    $params[4]    $params[5]    $params[6]    $cp    $phi    $m    $QQFUDGE    $LJFUDGE\n";
 
 }	
 print OUT "FINISH\n";
 close(OUT);
+
+
+open(CONF, ">CONFIG.frag") || die " Couldn't open config for writing:$!\n";
+
+#
+# Find Box dimensions
+#
+my $x =0;
+my $y = 0;
+my $z = 0;
+for($i = 0; $i < scalar(@buf); $i++) {
+	if ($buf[$i] =~ /^box \(3x3\):.*/) {
+		@params = split(/\s+/, $buf[$i+1]);
+		$x = $params[2];
+		@params = split(/\s+/, $buf[$i+2]);
+		$y = $params[3];
+		@params = split(/\s+/, $buf[$i+3]);
+		$z = $params[4];
+		last;
+	}
+}
+$x *= 10;
+$y *= 10;
+$z *= 10;
+print "$x $y $z\n";
+print CONF "TEST\n";
+print CONF "       0        2      $natoms\n";
+printf CONF "%-020f %-20f %-20f\n",$x, 0.0, 0.0;
+printf CONF "%-20f %-20f %-20f\n",0.0, $y, 0.0;
+printf CONF "%-20f %-20f %-20f\n",0.0, 0.0, $z;
+
+for (; $i < scalar(@buf); $i++) {
+	if ($buf[$i] =~ /^x \($natoms.3\):.*/) {
+		$found = $i+1;
+		last;
+	}
+}
+
+
+for($i = 0; $i < $natoms; $i++) {
+	$line = $buf[$found+$i];
+	chomp($line);
+	$line =~ s/.*\{\s+//;
+	$line =~ s/\}.*//;
+	@params = split(/,/, $line);
+	print "@params\n";
+	$j = $i+1;
+	$params[0] *= 10;
+	$params[1] *= 10;
+	$params[2] *= 10;
+	print CONF "$attype[$i]           $j\n";
+	printf CONF "     %-020f  %-020f %-020f\n", $params[0],$params[1], $params[2];
+}
+
+
+		
