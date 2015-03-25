@@ -88,7 +88,7 @@ for ($i = 0; $i < scalar(@attypes); $i++ ) {
 		($jsig,$jeps) = split(/\s+/,$lj{$b});
 		$sig = 0.5 *($isig +$jsig);
 		$eps = ($ieps *$jeps)**0.5;
-		print "$attypes[$i]\t$attypes[$j]\tlj\t$sig\t$eps\n";
+		print OUT "$attypes[$i]    $attypes[$j]   lj    $sig    $eps     10.0\n";
 	}
 }
 
