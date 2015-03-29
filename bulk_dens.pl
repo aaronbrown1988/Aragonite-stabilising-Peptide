@@ -25,22 +25,25 @@ for ($i=0; $i < scalar(@files); $i++) {
 		} elsif ($line !~ /^ATOM/) {
 			next;
 		}
-		if ($params[5] > $end || $params[5] < $start) {
+		if ($params[5] > $end || $params[5] <= $start) {
 			next;
 		} 
 		if (($params[3] =~ /SOL/) && ($params[2] =~ /.*OW.*/)) {
 			$nO ++;
-		} elsif ($params[3] eq "SOL" && $params[2] =~ /.*HW[12].*/) {
+		} elsif (($params[3] =~ /SOL/) && ($params[2] =~ /.*HW[12].*/)) {
 			$nH++;
 		}
 
 	}
 	$vol = ($end-$start)*$box[1] * $box[2];
-	$vol *= 0.0001;
-	$density = ($nO * (18.0/6))/$vol;
+	$vol *= 0.001;
+	$densityA = ($nO * (18.0/6))/($vol*0.1);
+	$density = $nO*15.9994 + $nH*1.008;
+	$density = ($density*1.66)/$vol;
+
 	$i = $files[$i];
 	$i =~ s/.pdb//;
-	print "$i\t$density\t$vol\t$nO\n";
+	print "$i\t$density\t$densityA\t$nO\t$nH\n";
 
 	close(FH);
 
