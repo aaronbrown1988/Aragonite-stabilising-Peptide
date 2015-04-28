@@ -141,7 +141,7 @@ sub process {
 	$top_layer /= $n;
 	$file_res = 0;
 	$cur_res = 0;
-	$cur_file =~ tr/[A-Z]//;
+	$cur_file =~ s/[A-Za-z]//g;
 	$cur_file =~ s/\.//;
 	$outline =  "$cur_file\t$top_layer";
 	for ($i = 0; $i < scalar(@atoms); $i++) {
