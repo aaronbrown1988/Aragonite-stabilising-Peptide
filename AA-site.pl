@@ -102,14 +102,24 @@ sub process {
 				$ca[0] = $params[6];
 				$ca[1] = $params[7];
 				$ca[2] = $params[8];
+			} elsif ($params[2] eq "N" ) {
+				$n[0] = $params[6];
+				$n[1] = $params[7];
+				$n[2] = $params[8];
+			} elsif ($params[2] eq "C") {
+				$c[0] = $params[6];
+				$c[1] = $params[7];
+				$c[2] = $params[8];
+
 			}
+
 		}
 	}
 #print STDERR "Site: @ep\t CA:@ca\n";
 
-	$EV = V($ep[0], $ep[1], $ep[2]);
+	$NCV = V(($n[0]+$c[0])/2, ($n[1]+$c[1])/2, ($n[2]+$c[2])/2);
 	$CaV = V($ca[0], $ca[1], $ca[2]);
-	$a = $CaV - $EV;
+	$a = $CaV - $NCV;
 	print AT "$filename\t";
 	# Dot product with the chain direction.
 	$dot = $a * V(0,0,1);
