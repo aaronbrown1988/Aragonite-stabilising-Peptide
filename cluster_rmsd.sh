@@ -15,7 +15,7 @@ rm rmsd.tsv
 touch rmsd.tsv
 echo "#$A $B RMSD" >> rmsd.tsv  
 for i in `ls $A/*.pdb`;  do
-	 iname=`echo $i | sed -e 's/.pdb.*//; s/.*\///g;'`
+	 iname=`echo $i | sed -e 's/\.pdb.*//; s/.*\///g;'`
 	 if [ $iname == "clusters" ]; then
 	 	continue;
 	fi
@@ -23,7 +23,7 @@ for i in `ls $A/*.pdb`;  do
 #		continue;
 #	fi
 	 for j in `ls $B/*.pdb`; do
-	 	jname=`echo $j | sed -e 's/.pdb.*//; s/.*\///g;'`
+	 	jname=`echo $j | sed -e 's/\.pdb.*//; s/.*\///g;'`
 	 	if [ $jname == "clusters" ]; then
 	 		continue;
 		fi
@@ -37,7 +37,7 @@ for i in `ls $A/*.pdb`;  do
 			echo -e "$4\n$4\n" | g_rms -s "$i" -f "$j" -n $3;
 		fi
 #	 	echo "-1" > rmsd.xvg
-		cat rmsd.xvg | sed -e "s/[0-9.]* /$iname $jname/" > rmsd.xvg2
+		cat rmsd.xvg | sed -e "s/ *[0-9.]* /$iname $jname/" > rmsd.xvg2
 		mv rmsd.xvg rmsd.old.xvg
 		cat rmsd.xvg2 | grep -e '^[^@#].*' >> rmsd.tsv;
 		rm rmsd.xvg2
