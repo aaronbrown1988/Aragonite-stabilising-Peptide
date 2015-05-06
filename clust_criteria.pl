@@ -8,6 +8,10 @@ my @accepted;
 push(@prev, -1);
 open (FH, $ARGV[0]) || die "couldn't open $ARGV[0]\n";
 
+my $min;
+$min = ($ARGV[1] == undef)? 5:$ARGV[1];
+
+
 open(OUT, ">clust_accepted_time.xvg");
 
 
@@ -26,7 +30,7 @@ while ($line = readline(FH)) {
 	}
 	($throw, $time, $curr) = split(/\s+/, $line);
 	$prev[$curr] ++;
-	if($prev[$curr] > 5 && !existing($curr)) {
+	if($prev[$curr] > $min && !existing($curr)) {
 		push(@accepted, $curr);
 		$n++;
 	}	
