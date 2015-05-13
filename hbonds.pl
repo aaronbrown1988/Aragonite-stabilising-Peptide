@@ -503,6 +503,8 @@ sub HB_table
 		$chain[1] = $tmp[3];
 		$chain[0] =~ s/[0-9]+//;
 		$chain[1] =~ s/[0-9]+//;
+		$tmp[1] =~ s/[A-Z]+//;
+		$tmp[3] =~ s/[A-Z]+//;
 		
 		# Keep the chains the right way round
 		if ($chain[0] eq $chain[1]) {
