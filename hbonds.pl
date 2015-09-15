@@ -5,9 +5,11 @@
 #
 use Math::Trig;
 my @pairs = qw();
+my @surf_pairs = qw();
 my @bonds = qw();
 my @summary = qw();
 my $npairs=-1;
+my $has_cht=0;
 $folder = $ARGV[0];
 #my $sep_chains = ($ARGV[1] == undef)? 0:1
 opendir(DH, "$ARGV[0]") || die "couldn't open $ARGV[0]: $!\n";
@@ -63,6 +65,8 @@ sub process
 	my @peptide = qw();
 	my $file = shift;
 	open(FH, "$folder/$file") || die "couldn't open $folder/$file :$!\n";
+	my @pep_com = qw( 99e99 99e99 99e99);
+	my $pep_n = 0;
 	while($line = readline(FH)) {
 		if ($line !~ /.*ATOM.*/) {
 			next;
@@ -77,6 +81,33 @@ sub process
 			$line =~ s/$params[3]/$params[3]$params[4]/;
 #			print "$line\n";
 		}
+		@params = split(/\s+/,$line);
+		$pep_com[0] = ($params[6] < $pep_com[0])? $params[6]:$pep_com[0];
+		$pep_com[1] = ($params[7] < $pep_com[1])? $params[7]:$pep_com[1];
+		$pep_com[2] = ($params[8] < $pep_com[2])? $params[8]:$pep_com[2];
+		push(@peptide, $line);
+	}
+	seek(FH,0, SEEK_SET);
+	while ($line = readline(FH)) {
+		if($line !~ /.*ATOM.*/) {
+			next;
+		}
+		if ($line !~ /.*CHT.*/) {
+			$has_cht=1;
+			next;
+		}
+		@params = split(/\s+/,$line);
+		if ($params[4] !~ /[0-9.]+/) {
+			$line =~ s/ $params[4] //;
+			$line =~ s/$params[3]/$params[3]$params[4]/;
+#			print "$line\n";
+		}
+		@params = split(/\s+/,$line);
+		if ( abs($params[6] - $pep_com[0]) > 6) {
+			#skip if the position of the chitin is more than
+			# 20 from COM of peptide
+			next;
+		}
 		push(@peptide, $line);
 	}
 	close(FH);
@@ -85,7 +116,7 @@ sub process
 	for ($i = 0; $i < @peptide; $i++) {
 		$line = $peptide[$i];
 		@params = split (/\s+/, $line);
-		if ($params[2] !~ /^[FON].*/) {
+		if ($params[2] !~ /^[FOSN].*/) {
 			#Give up if not the right type;
 			next;
 		}
@@ -135,9 +166,16 @@ sub process
 			if ($A[4] == $B[4]) {
 				next;
 			}
+			if ($peptide[$donor[$i]] =~ /.*CHT.*/ && $peptide[$accept[$j]] =~ /.*CHT.*/) {
+				next;
+			}
 
+			if($A[3] !~ /CHT/ && $B[3] !~/CHT/) {
+				push(@pairs, "$A[3]$A[4]:$A[2]  $B[3]$B[4]:$B[2]");
+			} else {
+				push(@surf_pairs, "$A[3]$A[4]:$A[2]  $B[3]$B[4]:$B[2]");
+			}
 
-			push(@pairs, "$A[3]$A[4]:$A[2]  $B[3]$B[4]:$B[2]");
 			$bonds[@pairs-1] = 0;
 			$dist = ($A[5] - $B[5])**2;
 			$dist += ($A[6] - $B[6])**2;
@@ -188,26 +226,34 @@ sub process
 				$summary[@pairs-1]++;
 				$nbonds++;
 				
-				
-				#Classification
-				if ($A[2] =~ /(CA|N|C|O|NT)\b/) {
-					#Backbone;
-					if($B[2] =~ /(CA|N|C|O|NT)\b/) {
-						$bb ++;
-						
-					} else {
-						$scb ++;
+				if ($has_cht==1 && ($A[3] =~ /CHT/ || $B[3] =~ /CHT/)) {
+					if ($A[3] =~ /CHT/) {
+						print BD ",$A[3]:$A[2]-$B[3]$B[4]:$B[2]";
+					} elsif ($B[3] =~/CHT/) {
+						print BD ",$B[3]:$B[2]-$A[3]$A[4]:$A[2]";
 					}
-				} else {
-					if($B[2] =~ /(CA|N|C|O|NT)\b/) {
-						$scb ++;
 						
+				} else {	
+				#Classification
+					if ($A[2] =~ /(CA|N|C|O|NT)\b/) {
+						#Backbone;
+						if($B[2] =~ /(CA|N|C|O|NT)\b/) {
+							$bb ++;
+							
+						} else {
+							$scb ++;
+						}
 					} else {
-					
-							$scsc ++;
+						if($B[2] =~ /(CA|N|C|O|NT)\b/) {
+							$scb ++;
+							
+						} else {
+						
+								$scsc ++;
+						}
 					}
 				}
-				print BD ",$A[3]$A[4]:$A[2]-$B[3]$B[4]:$B[2]";
+					print BD ",$A[3]$A[4]:$A[2]-$B[3]$B[4]:$B[2]";
 
 			}
 
@@ -221,7 +267,12 @@ sub process
 	$throw = scalar(@pairs);
 #	print "$throw =? $npairs\n";
 	 if ($npairs != scalar(@pairs)) {
-		 die "had $npairs now have $throw\n";
+	#	 die "had $npairs now have $throw\n";
+		 print STDERR "$file has $throw pairs instead of $npairs we started with\n";
+		#set npairs to the lowest value.
+		# this is because for the latter output we want just the peptide/peptide counted	
+		 $npairs = ($npairs > $throw)? $throw:$npairs;
+		 
 	 }
 		
 	print "$file\t$nbonds\t$bb\t$scsc\t$scb\n";
