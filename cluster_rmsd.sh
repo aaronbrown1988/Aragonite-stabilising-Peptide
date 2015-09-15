@@ -34,10 +34,10 @@ for i in `ls $A/*.pdb`;  do
 		if [ $# == 2 ]; then
 		 	echo -e "4\n4\n" | g_rms -s "$i" -f "$j";
 		else
-			echo -e "$4\n$4\n" | g_rms -s "$i" -f "$j" -n $3;
+			echo -e "$3\n$3\n" | g_rms -s "$i" -f "$j" ;
 		fi
 #	 	echo "-1" > rmsd.xvg
-		cat rmsd.xvg | sed -e "s/ *[0-9.]* /$iname $jname/" > rmsd.xvg2
+		cat rmsd.xvg | sed -e "s/ *[0-9.]* /$iname $jname  /" > rmsd.xvg2
 		mv rmsd.xvg rmsd.old.xvg
 		cat rmsd.xvg2 | grep -e '^[^@#].*' >> rmsd.tsv;
 		rm rmsd.xvg2
