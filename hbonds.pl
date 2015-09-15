@@ -67,6 +67,9 @@ sub process
 		if ($line !~ /.*ATOM.*/) {
 			next;
 		}
+		if ($line =~ /.*CHT.*/) {
+			next;
+		}
 		# Multiple chains fix
 		@params = split(/\s+/,$line);
 		if ($params[4] !~ /[0-9.]+/) {
