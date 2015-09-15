@@ -5,6 +5,8 @@
 my @pairs;
 my %table;
 my %bb;
+my %chtb;
+my %chtsc;
 my %scb;
 my %scsc;
 my %uniq;
@@ -23,6 +25,11 @@ while($line = readline(FH)) {
 		$res[1] =~ s/\:[A-Z0-9]+//;
 		$found = 0;
 #	print "@res\n";
+		if ($res[0] =~ /.*CHT.*/) {
+			$res[0] = substr($res[0], 0, 3);
+		}elsif ($res[1] =~ /.*CHT.*/) {
+			$res[1] = substr($res[1], 0, 3);
+		}
 		foreach $test (@pairs) {
 			if ($test eq "$res[0]-$res[1]") {
 				$found = 1;
@@ -52,17 +59,32 @@ while($line = readline(FH)) {
 		}
 
 		$table{$pair}++;
-		if ($at[0] =~ /(CA|N|C|O|NT)\b/) {
+		if ($res[0] =~ /CHT/ ) {
 			if($at[1] =~ /(CA|N|C|O|NT)\b/) {
-				$bb{$pair} ++;
+				$chtb{$pair} ++;
 			} else {
-				$scb{$pair} ++;
+				$chtsc{$pair} ++;
 			}
-		} else {
-			if($at[1] =~ /(CA|N|C|O|NT)\b/) {
-				$scb{$pair} ++;
+		} elsif ($res[1] =~ /CHT/) {
+			if($at[0] =~ /(CA|N|C|O|NT)\b/) {
+				$chtb{$pair} ++;
 			} else {
-				$scsc{$pair} ++;
+				$chtsc{$pair} ++;
+			}
+
+		}else{
+			if ($at[0] =~ /(CA|N|C|O|NT)\b/) {
+				if($at[1] =~ /(CA|N|C|O|NT)\b/) {
+					$bb{$pair} ++;
+				} else {
+					$scb{$pair} ++;
+				}
+			} else {
+				if($at[1] =~ /(CA|N|C|O|NT)\b/) {
+					$scb{$pair} ++;
+				} else {
+					$scsc{$pair} ++;
+				}
 			}
 		}
 	}
