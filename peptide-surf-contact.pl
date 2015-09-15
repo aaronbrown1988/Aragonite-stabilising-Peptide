@@ -7,6 +7,7 @@
 # Caveat: Doesn't care about PBCS, assumes +ve direction is away from slab
 use threads;
 use threads::shared;
+use POSIX;
 local $|=1;
 my $surf_res :shared;
 $surf_res = $ARGV[1];
@@ -20,6 +21,8 @@ my %sites :shared;
 my @contacts :shared;
 my @dists :shared;
 my @threads;
+my @hist :shared;
+my @second :shared;
 
 %sites = (
 		ALA => 'CB',
@@ -27,7 +30,7 @@ my @threads;
 		ASN => 'ND2',
 		ASP => 'CG',
 		GLN => 'N',
-		GLU => 'CG',
+		GLU => 'CD',
 		GLY => 'CA',
 		CYS => 'SG',
 		HIS => 'COM',
@@ -40,7 +43,7 @@ my @threads;
 		SER => 'OG',
 		THR => 'O',
 		TRP => 'COM',
-		TYR => 'COM',
+		TYR => 'OH',
 		VAL => 'CB'
 		);
 
@@ -55,14 +58,27 @@ while ($file = readdir(DH)) {
 }
 closedir(DH);
 
+for ($i = 0; $i < 70; $i++) {
+	$second[$i] = 0;
+}
 
+for ($j = 0; $j < 4; $j ++) {
+	$hist[$j] = (shared_clone(\@second));
+}
+
+
+
+
+#spawn out threads
 for ($i=0; $i < 4; $i++) {
 	$threads[$i] = threads->create('run_me');
 }
-
+# attach threads to main process - this sets them running, 
+# and importantly makes this process wait.
 for ($i=0; $i < 4; $i++) {
 	$threads[$i]->join();
 }
+
 
 
 
@@ -72,12 +88,31 @@ sub run_me {
 	for ($fid = $id-1; $fid < scalar(@files); $fid+=4) {
 #	for ($fid = $id-1; $fid < 4; $fid+=4) {
 		process($files[$fid]);
-		print "\b" x length($progress);
+		print "\b" x (length($progress) + 1);
 		$nfiles = scalar(@files);
 		$progress = "$fid/$nfiles";
 		print  "$progress";
 	}
 }
+
+
+
+#
+# Aggregate Histograms together
+#
+for ($i = 0; $i < 70; $i++) {
+	$hist[0][$i] += $hist[1][$i];
+	$hist[0][$i] += $hist[2][$i];
+	$hist[0][$i] += $hist[3][$i];
+}
+
+open(HIST, ">hist.tsv");
+for ($i = 0; $i < 70; $i++) {
+	print HIST "$i\t$hist[0][$i]\n";
+}
+close(HIST);
+
+
 open(CONT, ">contact.tsv") || die "couldn't open contact.tsv for writing\n" ;
 open(DISTS, ">resid_dist.tsv") || die "couldn't open resid_dist.tsv for writing\n" ;
 for ($i = 0; $i < scalar(@dists); $i++) {
@@ -97,6 +132,8 @@ sub process {
 	my $cont = "";
 	my $ncont =0;
 	my $outline = "";
+	my $res_start;
+	my $min_heavy;
 	$cur_file = @_[0];
 	open(FH, "$path/$cur_file") || die "Couldn't open $ARGV[0]/$cur_file :$!\n";
 	while ($line = readline(FH)) {
@@ -124,6 +161,8 @@ sub process {
 	#Convert this to an average over the top layer
 	my $top_layer = 0;
 	my $n = 0;
+
+	# Find the base of the troughs on alpha-chitin
 	foreach $line (@surf) {
 		@params = split(/\s+/, $line);
 		if ($params[4] =~ /[A-Z]+/) {
@@ -144,11 +183,14 @@ sub process {
 	$cur_file =~ s/[A-Za-z]//g;
 	$cur_file =~ s/\.//;
 	$outline =  "$cur_file\t$top_layer";
+
+	#Loop over atoms
 	for ($i = 0; $i < scalar(@atoms); $i++) {
 		@params = split(/\s+/, $atoms[$i]);
 		if ($params[4] != $file_res) {
 			$cur_res++;
 			$file_res = $params[4];
+			$res_start = $i;
 		} else {
 			next;
 		}
@@ -172,6 +214,7 @@ sub process {
 			$dist = $com - $top_layer;
 	
 		} elsif ($sites{$params[3]} eq undef) {
+			# Skip Unknown residues/ residues without defined sites
 			next;
 		} else {
 			while($params[2] ne $sites{$params[3]}) {
@@ -193,10 +236,39 @@ sub process {
 			
 		}
 		$outline=  "$outline\t$dist";
-		if ($dist <= 11 ) {
+		if ($dist <= 6 ) {
 			$ncont++;
 			$cont = "$cont,$params[3]$params[4]";
+		} elsif ($dist <= 11) {
+			$min_heavy = 9e99;
+			$k = 0;
+			foreach $line (@surf) {
+				$k++;
+				@params = split(/\s+/, $line);
+				$col_slab = ($params[4] =~ /[A-Z]+/)? 6:5;
+				@at_params = split(/\s+/, $atoms[$res_start]);
+				$j = 0;
+				while ($at_params[4] == $file_res) {
+					$dist = ($at_params[5] - $params[$col_slab])**2;
+					$dist += ($at_params[6] - $params[$col_slab+1])**2;
+					$dist += ($at_params[7] - $params[$col_slab+2])**2;
+					$dist = ($dist**0.5);
+					
+					$min_heavy = ($min_heavy > $dist)? $dist:$min_heavy;
+					$j ++;
+					@at_params = split(/\s+/, $atoms[$res_start+$j]);
+
+				}
+			}
+			if ($min_heavy == 9e99) {
+				die "COuldn't calulate min chitin distance: $res_start, $j,$k, $file_res, $at_params[4], $dist\n";
+			}
+			$min_heavy = floor($min_heavy);
+			$hist[$id][$min_heavy]++;
+		
 		}
+
+
 	}
 	$outline= "$outline\n";
 	# Added calculated data to the output buffers
