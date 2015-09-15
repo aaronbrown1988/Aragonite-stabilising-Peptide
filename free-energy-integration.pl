@@ -6,7 +6,7 @@ open(FH, $ARGV[0]) || die "Couldn't open $ARGV[0] for reading\n";
 
 $start = $ARGV[1];
 $end = $ARGV[2];
-
+$ads_start = ($ARGV[3] == undef)? 0:$ARGV[3];
 
 $start_i = 0;
 $end_i = 1e99;
@@ -34,6 +34,9 @@ print "C_ads: $x[0]->$start and C_bulk: $start -> $end]\n";
 
 $integral_ads = 0;
 for ($i = 0; $x[$i] <= $start; $i++) {
+	if($x[$i] < $ads_start) {
+		next;
+	}
 	$dx = abs($x[$i] - $x[$i+1]);
 	
 	$f_i = exp(-$beta*$y[$i]);
