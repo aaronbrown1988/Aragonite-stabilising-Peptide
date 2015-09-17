@@ -23,7 +23,7 @@ while ($file = readdir(DH)) {
 for($I=0; $I < @files; $I++) {
 		$file = $files[$I];
 		process($file);
-#		if ($I >=  100) { last;}
+#		if ($I >=  2) { last;}
 }
 closedir(DH);
 #bond_data();
@@ -59,6 +59,7 @@ END
 
 sub process
 {
+	my @box = qw(99e99 99e99 99e99);
 	my @accept = qw();
 	my @donor = qw();
 	my @donorH = qw();
@@ -68,6 +69,15 @@ sub process
 	my @pep_com = qw( 99e99 99e99 99e99);
 	my $pep_n = 0;
 	while($line = readline(FH)) {
+		if ($line =~ /.*CRYST.*/) {
+			@params = split(/\s+/, $line);
+			$box[0] = $params[1];
+			$box[1] = $params[2];
+			$box[2] = $params[3];
+#			print "$file BOX: $box[0] $box[1] $box[2]\n";
+			next;
+
+		}
 		if ($line !~ /.*ATOM.*/) {
 			next;
 		}
@@ -82,9 +92,30 @@ sub process
 #			print "$line\n";
 		}
 		@params = split(/\s+/,$line);
-		$pep_com[0] = ($params[6] < $pep_com[0])? $params[6]:$pep_com[0];
-		$pep_com[1] = ($params[7] < $pep_com[1])? $params[7]:$pep_com[1];
-		$pep_com[2] = ($params[8] < $pep_com[2])? $params[8]:$pep_com[2];
+	
+		$ox = $params[5];
+		$oy = $params[6];
+		$oz = $params[7];
+
+		# Move us in if were below
+		$params[5] = ($params[5] < 0)? ($params[5]+$box[0]):$params[5];
+		$params[6] = ($params[6] < 0)? ($params[6]+$box[1]):$params[6];
+		$params[7] = ($params[7] < 0)? ($params[7]+$box[2]):$params[7];
+		
+		#Move us in if were above
+		$params[5] = ($params[5] > $box[0])? ($params[5]-$box[0]):$params[5];
+		$params[6] = ($params[6] > $box[1])? ($params[6]-$box[1]):$params[6];
+		$params[7] = ($params[7] > $box[2])? ($params[7]-$box[2]):$params[7];
+			
+		$line =~ s/$ox/$params[5]/;
+		$line =~ s/$oy/$params[6]/;
+		$line =~ s/$oz/$params[7]/;
+		
+		@params = split(/\s+/,$line);
+
+		$pep_com[0] = ($params[5] < $pep_com[0])? $params[5]:$pep_com[0];
+		$pep_com[1] = ($params[6] < $pep_com[1])? $params[6]:$pep_com[1];
+		$pep_com[2] = ($params[7] < $pep_com[2])? $params[7]:$pep_com[2];
 		push(@peptide, $line);
 	}
 	seek(FH,0, SEEK_SET);
@@ -99,11 +130,29 @@ sub process
 		@params = split(/\s+/,$line);
 		if ($params[4] !~ /[0-9.]+/) {
 			$line =~ s/ $params[4] //;
-			$line =~ s/$params[3]/$params[3]$params[4]/;
+#			$line =~ s/$params[3]/$params[3]]/;
 #			print "$line\n";
 		}
+		$ox = $params[5];
+		$oy = $params[6];
+		$oz = $params[7];
+		# Move us in if were below
+		$params[5] = ($params[5] < 0)? ($params[5]+$box[0]):$params[5];
+		$params[6] = ($params[6] < 0)? ($params[6]+$box[1]):$params[6];
+		$params[7] = ($params[7] < 0)? ($params[7]+$box[2]):$params[7];
+		
+		#Move us in if were above
+		$params[5] = ($params[5] > $box[0])? ($params[5]-$box[0]):$params[5];
+		$params[6] = ($params[6] > $box[1])? ($params[6]-$box[1]):$params[6];
+		$params[7] = ($params[7] > $box[2])? ($params[7]-$box[2]):$params[7];
+		
+		$line =~ s/$ox/$params[5]/;
+		$line =~ s/$oy/$params[6]/;
+		$line =~ s/$oz/$params[7]/;
+		
 		@params = split(/\s+/,$line);
-		if ( abs($params[6] - $pep_com[0]) > 6) {
+		@params = split(/\s+/,$line);
+		if ( abs($params[5] - $pep_com[0]) > 6) {
 			#skip if the position of the chitin is more than
 			# 20 from COM of peptide
 			next;
@@ -157,6 +206,7 @@ sub process
 	$bb = 0;
 	$scb = 0;
 	@pairs = qw();
+	@surf_pairs = qw();
 	@bonds = qw();
 	print BD "$file"; 
 	for ($i = 0; $i < @donor; $i ++ ) {
@@ -177,12 +227,41 @@ sub process
 			}
 
 			$bonds[@pairs-1] = 0;
-			$dist = ($A[5] - $B[5])**2;
-			$dist += ($A[6] - $B[6])**2;
-			$dist += ($A[7] - $B[7])**2;
+			
+			$dx = (($A[5] - $B[5])**2)**0.5;
+			$dy = (($A[6] - $B[6])**2)**0.5;
+			$dz = (($A[7] - $B[7])**2)**0.5;
+
+			if(($dx > (0.5*$box[0])) && ($A[5] > $B[5])) {
+				$B[5] += $box[0];
+			}elsif (($dx > (0.5*$box[0])) && ($A[5] < $B[5])) {
+				$A[5] += $box[0];
+			}
+			if(($dy > (0.5*$box[1])) && ($A[6] > $B[6])) {
+				$B[6] += $box[1];
+			}elsif (($dy > (0.5*$box[1])) && ($A[6] < $B[6])) {
+				$A[6] += $box[1];
+			}
+			if(($dz > (0.5*$box[2])) && ($A[7] > $B[7])) {
+				$B[7] += $box[2];
+			}elsif (($dz > (0.5*$box[2])) && ($A[7] < $B[7])) {
+				$A[7] += $box[2];
+			}
+			
+			
+			
+			if ($dx > (0.5*$box[0])) { $dx -= (0.5*$box[0]);}
+			if ($dy > (0.5*$box[1])) { $dy -= (0.5*$box[1]);}
+			if ($dz > (0.5*$box[2])) { $dz -= (0.5*$box[2]);}
+
+
+
+			$dist = ($dx)**2;
+			$dist += ($dy)**2;
+			$dist += ($dz)**2;
 			$dist = sqrt($dist);
 
-			#print "$A[1] $B[1] $dist\n";
+#			print "$file: $A[3]:$A[2] $B[3]:$B[2] $dist\n";
 			if($dist > 3.5) {
 				next;
 			}
@@ -190,10 +269,26 @@ sub process
 			for ($k = 0; $k < @H; $k++ ) {
 				#print "$peptide[$H[$k]]\n ";
 				@C = split (/\s+/, $peptide[$H[$k]]);
+				
+				$dx = $C[5] -$B[5];
+				if (abs($dx) > 0.5*$box[0]) {
+					$C[5] += 0.5*$box[0];
+				}
+				$dy = $C[6] -$B[6];
+				if (abs($dy) > 0.5*$box[1]) {
+					$C[6] += 0.5*$box[1];
+				}
+				$dz = $C[7] -$B[7];
+				if (abs($dx) > 0.5*$box[2]) {
+					$C[7] += 0.5*$box[2];
+				}
+
+
 				$dist = ($C[5] - $B[5])**2;
 				$dist += ($C[6] - $B[6])**2;
 				$dist += ($C[7] - $B[7])**2;
 				$dist = sqrt($dist);
+#				print "$file:$C[2] $B[2] $dist\n";
 				if ($dist > 2.5) {
 					next;
 				}
@@ -214,10 +309,12 @@ sub process
 				$theta /= ($dist *$dist2);
 
 				$theta = rad2deg(acos($theta));
+#				print "$file $A[2] $B[2] $C[2] theta: $theta\n";
 
 				if (abs(180 - $theta) > 30) {
 					next;
 				}
+#				print "$file $A[2] $B[2] $C[2] - pass\n";
 				if (($A[2] !~ /(CA|N|C|O|NT)\b/ && $B[2] !~ /(CA|C|N|O|NT)\b/) && (($A[3] =~ /(ASP|GLU)/ && $B[3] =~ /(LYS|ARG)/) || ($B[3] =~ /(ASP|GLU)/ && $A[3] =~ /(LYS|ARG)/)) ) {
 					next;
 				}
@@ -226,11 +323,11 @@ sub process
 				$summary[@pairs-1]++;
 				$nbonds++;
 				
-				if ($has_cht==1 && ($A[3] =~ /CHT/ || $B[3] =~ /CHT/)) {
-					if ($A[3] =~ /CHT/) {
-						print BD ",$A[3]:$A[2]-$B[3]$B[4]:$B[2]";
-					} elsif ($B[3] =~/CHT/) {
-						print BD ",$B[3]:$B[2]-$A[3]$A[4]:$A[2]";
+				if ($has_cht==1 && ($A[3] =~ /.*CHT.*/ || $B[3] =~ /.*CHT.*/)) {
+					if ($A[3] =~ /.*CHT.*/) {
+						print BD ",CHT$A[4]:$A[2]-$B[3]$B[4]:$B[2]";
+					} elsif ($B[3] =~ /.*CHT.*/) {
+						print BD ",CHT$B[4]:$B[2]-$A[3]$A[4]:$A[2]";
 					}
 						
 				} else {	
@@ -252,8 +349,8 @@ sub process
 								$scsc ++;
 						}
 					}
-				}
 					print BD ",$A[3]$A[4]:$A[2]-$B[3]$B[4]:$B[2]";
+				}
 
 			}
 
@@ -268,7 +365,7 @@ sub process
 #	print "$throw =? $npairs\n";
 	 if ($npairs != scalar(@pairs)) {
 	#	 die "had $npairs now have $throw\n";
-		 print STDERR "$file has $throw pairs instead of $npairs we started with\n";
+		 print STDERR "$file has $throw peptide pairs instead of $npairs we started with\n";
 		#set npairs to the lowest value.
 		# this is because for the latter output we want just the peptide/peptide counted	
 		 $npairs = ($npairs > $throw)? $throw:$npairs;
